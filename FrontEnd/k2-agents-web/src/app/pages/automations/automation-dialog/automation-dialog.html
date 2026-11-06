@@ -1,0 +1,84 @@
+<h2 mat-dialog-title>{{ (data.rule ? 'automations.editTitle' : 'automations.newTitle') | transloco }}</h2>
+<mat-dialog-content>
+  @if (error(); as e) {
+    <div class="alert" role="alert">{{ e }}</div>
+  }
+  <form [formGroup]="form" class="form" (ngSubmit)="save()">
+    @if (data.isSuperAdmin && !data.rule) {
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'users.company' | transloco }}</mat-label>
+        <mat-select formControlName="companyId">
+          @for (c of data.companies; track c.id) {
+            <mat-option [value]="c.id">{{ c.name }}</mat-option>
+          }
+        </mat-select>
+        <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+      </mat-form-field>
+    }
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'automations.name' | transloco }}</mat-label>
+      <input matInput formControlName="name" maxlength="120" />
+      <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+    </mat-form-field>
+
+    <div class="when-then">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'automations.when' | transloco }}</mat-label>
+        <mat-select formControlName="triggerType">
+          @for (t of triggers; track t) {
+            <mat-option [value]="t">{{ 'automations.triggers.' + t | transloco }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-icon class="arrow" aria-hidden="true">arrow_forward</mat-icon>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'automations.then' | transloco }}</mat-label>
+        <mat-select formControlName="actionType">
+          @for (a of actions(); track a) {
+            <mat-option [value]="a">{{ 'automations.actions.' + a | transloco }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <p class="hint">{{ 'automations.actionHelp.' + form.controls.actionType.value | transloco }}</p>
+
+    @if (usesText()) {
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'automations.notificationTitle' | transloco }}</mat-label>
+        <input #titleInput matInput formControlName="title" maxlength="160" (focus)="focus('title')" [placeholder]="'automations.titlePlaceholder' | transloco" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'automations.message' | transloco }}</mat-label>
+        <textarea #messageInput matInput rows="3" formControlName="message" maxlength="500" (focus)="focus('message')"></textarea>
+        <mat-hint align="end">{{ form.controls.message.value.length }}/500</mat-hint>
+      </mat-form-field>
+
+      <div class="placeholders">
+        <span>{{ 'automations.insert' | transloco }}</span>
+        @for (p of data.catalog.placeholders; track p) {
+          <button type="button" class="chip" (mousedown)="$event.preventDefault()" (click)="insert(p, titleInput, messageInput)">{{ '{' + p + '}' }}</button>
+        }
+      </div>
+
+      <section class="preview" [attr.aria-label]="'automations.preview' | transloco">
+        <h3>{{ 'automations.preview' | transloco }}</h3>
+        <div class="preview__card">
+          <mat-icon>notifications</mat-icon>
+          <div>
+            <strong>{{ preview().title || ('automations.defaultTitle' | transloco) }}</strong>
+            @if (preview().message) {
+              <p>{{ preview().message }}</p>
+            }
+          </div>
+        </div>
+        <small class="hint">{{ 'automations.previewNote' | transloco }}</small>
+      </section>
+    }
+
+    <mat-slide-toggle formControlName="enabled">{{ 'automations.enabled' | transloco }}</mat-slide-toggle>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>{{ 'common.cancel' | transloco }}</button>
+  <button mat-flat-button type="button" (click)="save()" [disabled]="saving()">{{ (saving() ? 'common.saving' : 'common.save') | transloco }}</button>
+</mat-dialog-actions>

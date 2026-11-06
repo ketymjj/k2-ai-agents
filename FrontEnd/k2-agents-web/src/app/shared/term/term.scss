@@ -1,0 +1,20 @@
+.term {
+  text-decoration: underline dotted var(--primary);
+  text-underline-offset: 3px;
+  cursor: help;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+.term__icon {
+  margin-left: 2px;
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+  color: var(--primary);
+}

@@ -1,0 +1,26 @@
+# Segredos
+.env
+*.pfx
+appsettings.*.local.json
+
+# .NET
+bin/
+obj/
+.vs/
+*.user
+TestResults/
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Uploads locais
+BackEnd/src/K2Agents.Api/storage/
+
+# Editores / SO
+.vscode/*
+!.vscode/extensions.json
+.idea/
+Thumbs.db
+.DS_Store

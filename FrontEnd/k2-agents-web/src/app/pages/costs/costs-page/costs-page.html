@@ -1,0 +1,155 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'costs.title' | transloco }}</h1>
+      <p>{{ 'costs.subtitle' | transloco }}</p>
+    </div>
+  </header>
+
+  <app-module-guide module="costs" learnTab="costs" />
+
+  <section class="card filters">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'costs.fromMonth' | transloco }}</mat-label>
+      <input matInput type="month" [ngModel]="from()" (ngModelChange)="setRange($event, to())" [max]="to()" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'costs.toMonth' | transloco }}</mat-label>
+      <input matInput type="month" [ngModel]="to()" (ngModelChange)="setRange(from(), $event)" [min]="from()" />
+    </mat-form-field>
+    @if (auth.isSuperAdmin()) {
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'users.company' | transloco }}</mat-label>
+        <mat-select [ngModel]="companyId()" (ngModelChange)="companyId.set($event); reload()">
+          <mat-option value="">{{ 'dashboard.allCompanies' | transloco }}</mat-option>
+          @for (c of companies(); track c.id) {
+            <mat-option [value]="c.id">{{ c.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+  </section>
+
+  <div class="progress">
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+  </div>
+
+  <div class="card notice">
+    <mat-icon>info</mat-icon>
+    <span>{{ (report()?.canSeeBilling ? 'costs.howItWorksAdmin' : 'costs.howItWorks') | transloco }}</span>
+  </div>
+
+  @if (report(); as r) {
+    <section class="totals">
+      <article class="card total">
+        <span>{{ 'costs.totalEstimated' | transloco }}</span>
+        <strong>{{ usd(r.totalEstimatedUsd) }}</strong>
+      </article>
+      @if (r.canSeeBilling) {
+        <article class="card total">
+          <span>{{ 'costs.totalBilled' | transloco }}</span>
+          <strong>{{ r.totalBilledUsd === null ? '—' : usd(r.totalBilledUsd) }}</strong>
+        </article>
+        <article class="card total">
+          <span>{{ 'costs.difference' | transloco }}</span>
+          @if (difference(); as d) {
+            <strong [class.over]="d.usd > 0">{{ usd(d.usd) }} @if (d.pct !== null) {<small>({{ pct(d.pct) }})</small>}</strong>
+            <small class="muted">{{ 'costs.differenceHint' | transloco }}</small>
+          } @else {
+            <strong>—</strong>
+            <small class="muted">{{ 'costs.noBilling' | transloco }}</small>
+          }
+        </article>
+      }
+    </section>
+
+    <section class="card chart">
+      <h2>{{ 'costs.chartTitle' | transloco }}</h2>
+      <app-chart [config]="chart()" [label]="'costs.chartTitle' | transloco" />
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">{{ 'costs.byMonth' | transloco }}</h2>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>{{ 'costs.month' | transloco }}</th>
+              <th class="num">{{ 'costs.calls' | transloco }}</th>
+              <th class="num">{{ 'costs.tokens' | transloco }}</th>
+              <th class="num">{{ 'costs.estimated' | transloco }}</th>
+              @if (r.canSeeBilling) {
+                <th class="num">{{ 'costs.billed' | transloco }}</th>
+                <th class="num">{{ 'costs.difference' | transloco }}</th>
+                <th><span class="sr-only">{{ 'common.actions' | transloco }}</span></th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of r.months; track m.month) {
+              <tr>
+                <td>{{ monthLabel(m.month) }}</td>
+                <td class="num">{{ num(m.aiCalls) }}</td>
+                <td class="num">{{ num(m.tokens) }}</td>
+                <td class="num">{{ usd(m.estimatedUsd) }}</td>
+                @if (r.canSeeBilling) {
+                  <td class="num">
+                    {{ m.billedUsd === null ? '—' : usd(m.billedUsd) }}
+                    @if (m.billedNotes) {
+                      <mat-icon class="note" [matTooltip]="m.billedNotes" [attr.aria-label]="m.billedNotes">sticky_note_2</mat-icon>
+                    }
+                  </td>
+                  <td class="num" [class.over]="(m.differenceUsd ?? 0) > 0">{{ m.differenceUsd === null ? '—' : usd(m.differenceUsd) + (m.differencePct === null ? '' : ' (' + pct(m.differencePct) + ')') }}</td>
+                  <td class="actions">
+                    <button mat-icon-button type="button" (click)="editBilling(m)" [attr.aria-label]="'costs.editBilling' | transloco" [matTooltip]="'costs.editBilling' | transloco">
+                      <mat-icon>{{ m.billedUsd === null ? 'add_card' : 'edit' }}</mat-icon>
+                    </button>
+                    @if (m.billedUsd !== null) {
+                      <button mat-icon-button type="button" (click)="removeBilling(m)" [attr.aria-label]="'common.delete' | transloco" [matTooltip]="'common.delete' | transloco">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    @if (auth.isSuperAdmin() && !companyId()) {
+      <section class="card">
+        <h2 class="section-title">{{ 'costs.byCompany' | transloco }}</h2>
+        @if (r.byCompany.length === 0) {
+          <p class="muted">{{ 'costs.noUsage' | transloco }}</p>
+        } @else {
+          <div class="table-wrap">
+            <table class="data">
+              <thead>
+                <tr>
+                  <th>{{ 'users.company' | transloco }}</th>
+                  <th class="num">{{ 'costs.calls' | transloco }}</th>
+                  <th class="num">{{ 'costs.tokens' | transloco }}</th>
+                  <th class="num">{{ 'costs.estimated' | transloco }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of r.byCompany; track c.companyId) {
+                  <tr>
+                    <td>{{ c.name }}</td>
+                    <td class="num">{{ num(c.aiCalls) }}</td>
+                    <td class="num">{{ num(c.tokens) }}</td>
+                    <td class="num">{{ usd(c.estimatedUsd) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+  }
+</div>

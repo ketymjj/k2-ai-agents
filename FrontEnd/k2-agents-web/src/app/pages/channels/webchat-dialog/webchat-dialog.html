@@ -1,0 +1,110 @@
+<h2 mat-dialog-title>{{ (data.channel ? 'channels.editTitle' : 'channels.newTitle') | transloco }}</h2>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    @if (serverError(); as message) {
+      <div class="alert" role="alert">{{ message }}</div>
+    }
+    <div class="layout">
+      <div class="fields">
+        @if (showCompany) {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'users.company' | transloco }}</mat-label>
+            <mat-select formControlName="companyId">
+              @for (co of data.companies; track co.id) {
+                <mat-option [value]="co.id">{{ co.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'playground.agent' | transloco }}</mat-label>
+          <mat-select formControlName="agentId">
+            @for (a of agents(); track a.id) {
+              <mat-option [value]="a.id">{{ a.name }} · {{ 'agentStatus.' + a.status | transloco }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>{{ 'channels.agentHint' | transloco }}</mat-hint>
+          @if (form.controls.agentId.hasError('required')) {
+            <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'channels.name' | transloco }}</mat-label>
+          <input matInput formControlName="name" maxlength="120" [placeholder]="'channels.namePlaceholder' | transloco" />
+          @if (form.controls.name.hasError('required')) {
+            <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+          }
+        </mat-form-field>
+
+        <h3>{{ 'channels.appearance' | transloco }}</h3>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'channels.chatTitle' | transloco }}</mat-label>
+          <input matInput formControlName="title" maxlength="60" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'channels.subtitle' | transloco }} ({{ 'common.optional' | transloco }})</mat-label>
+          <input matInput formControlName="subtitle" maxlength="100" />
+        </mat-form-field>
+        <div class="row">
+          <mat-form-field appearance="outline" class="color-field">
+            <mat-label>{{ 'channels.color' | transloco }}</mat-label>
+            <input matInput formControlName="primaryColor" maxlength="7" />
+            <input matSuffix type="color" class="swatch" [value]="previewColor()" (input)="pickColor($event)" [attr.aria-label]="'channels.color' | transloco" />
+            @if (form.controls.primaryColor.invalid) {
+              <mat-error>#RRGGBB</mat-error>
+            }
+          </mat-form-field>
+          <mat-button-toggle-group formControlName="position" [attr.aria-label]="'channels.position' | transloco">
+            <mat-button-toggle value="left">{{ 'channels.left' | transloco }}</mat-button-toggle>
+            <mat-button-toggle value="right">{{ 'channels.right' | transloco }}</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'channels.welcome' | transloco }} ({{ 'common.optional' | transloco }})</mat-label>
+          <textarea matInput formControlName="welcomeMessage" rows="2" maxlength="500"></textarea>
+          <mat-hint>{{ 'channels.welcomeHint' | transloco }}</mat-hint>
+        </mat-form-field>
+
+        <h3>{{ 'channels.behavior' | transloco }}</h3>
+        <mat-slide-toggle formControlName="allowSimulatedReplies">{{ 'channels.allowSimulated' | transloco }}</mat-slide-toggle>
+        <p class="hint">{{ 'channels.allowSimulatedHint' | transloco }}</p>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'channels.offline' | transloco }} ({{ 'common.optional' | transloco }})</mat-label>
+          <input matInput formControlName="offlineMessage" maxlength="300" />
+          <mat-hint>{{ 'channels.offlineHint' | transloco }}</mat-hint>
+        </mat-form-field>
+
+        <h3>{{ 'channels.security' | transloco }}</h3>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'channels.allowedOrigins' | transloco }}</mat-label>
+          <textarea matInput formControlName="allowedOrigins" rows="3" placeholder="https://www.seusite.com.br"></textarea>
+          <mat-hint>{{ 'channels.allowedOriginsHint' | transloco }}</mat-hint>
+          @if (form.controls.allowedOrigins.errors?.['origin']; as bad) {
+            <mat-error>{{ 'channels.invalidOrigin' | transloco: { origin: bad } }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <aside class="preview" aria-hidden="true">
+        <span class="preview__label">{{ 'channels.preview' | transloco }}</span>
+        <div class="mock-site" [class.mock-site--left]="form.controls.position.value === 'left'">
+          <div class="mock-panel">
+            <div class="mock-header" [style.background]="previewColor()">
+              <strong>{{ form.controls.title.value || '—' }}</strong>
+              <small>{{ form.controls.subtitle.value }}</small>
+            </div>
+            <div class="mock-body">
+              <span class="mock-bubble">{{ form.controls.welcomeMessage.value || ('channels.agentWelcome' | transloco) }}</span>
+              <span class="mock-bubble mock-bubble--me" [style.background]="previewColor()">{{ 'channels.previewQuestion' | transloco }}</span>
+            </div>
+          </div>
+          <span class="mock-launcher" [style.background]="previewColor()"></span>
+        </div>
+      </aside>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>{{ 'common.cancel' | transloco }}</button>
+    <button mat-flat-button type="submit" [disabled]="saving()">{{ (saving() ? 'common.saving' : 'common.save') | transloco }}</button>
+  </mat-dialog-actions>
+</form>

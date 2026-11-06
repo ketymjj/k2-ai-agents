@@ -1,0 +1,139 @@
+.filters {
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+}
+
+.progress {
+  height: 4px;
+  margin: 12px 16px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.agent-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    box-shadow: 0 6px 16px rgba(16, 24, 40, 0.12);
+  }
+
+  &--inactive {
+    opacity: 0.7;
+  }
+}
+
+.agent-card__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--k2-purple), var(--k2-blue));
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.agent-card__title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    font-size: 16px;
+
+    &:hover {
+      color: var(--primary);
+    }
+  }
+
+  small {
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.agent-card__desc {
+  margin: 0;
+  color: var(--text-muted);
+  min-height: 42px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.agent-card__tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.agent-card__footer {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.empty-state {
+  .empty-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: var(--primary);
+  }
+
+  a {
+    margin-top: 8px;
+  }
+}
+
+.paginator {
+  margin-top: 16px;
+}

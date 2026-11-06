@@ -1,0 +1,205 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'dashboard.title' | transloco }}</h1>
+      <p>{{ 'dashboard.subtitle' | transloco }}</p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button type="button" (click)="downloadPdf()" [disabled]="downloading() || !data()">
+        <mat-icon>picture_as_pdf</mat-icon>{{ 'dashboard.exportPdf' | transloco }}
+      </button>
+      @if (canExport()) {
+        <button mat-stroked-button type="button" [matMenuTriggerFor]="csvMenu" [disabled]="downloading()">
+          <mat-icon>download</mat-icon>{{ 'dashboard.exportCsv' | transloco }}
+        </button>
+        <mat-menu #csvMenu="matMenu">
+          @for (type of exportTypes; track type) {
+            <button mat-menu-item type="button" (click)="downloadCsv(type)">{{ 'dashboard.exports.' + type | transloco }}</button>
+          }
+        </mat-menu>
+      }
+    </div>
+  </header>
+
+  <app-module-guide module="dashboard" />
+
+  <section class="card filters" [attr.aria-label]="'dashboard.filters' | transloco">
+    <div class="presets" role="group" [attr.aria-label]="'dashboard.period' | transloco">
+      @for (p of ['7', '30', '90']; track p) {
+        <button type="button" class="preset" [class.preset--active]="preset() === p" [attr.aria-pressed]="preset() === p" (click)="setPreset($any(p))">
+          {{ 'dashboard.lastDays' | transloco: { days: p } }}
+        </button>
+      }
+      <button type="button" class="preset" [class.preset--active]="preset() === 'custom'" [attr.aria-pressed]="preset() === 'custom'" (click)="setPreset('custom')">
+        {{ 'dashboard.custom' | transloco }}
+      </button>
+    </div>
+    @if (preset() === 'custom') {
+      <div class="range">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'dashboard.from' | transloco }}</mat-label>
+          <input matInput type="date" [ngModel]="from()" (ngModelChange)="setRange($event, to())" [max]="to()" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'dashboard.to' | transloco }}</mat-label>
+          <input matInput type="date" [ngModel]="to()" (ngModelChange)="setRange(from(), $event)" [min]="from()" />
+        </mat-form-field>
+      </div>
+    }
+    <div class="selects">
+      @if (auth.isSuperAdmin()) {
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'users.company' | transloco }}</mat-label>
+          <mat-select [ngModel]="companyId()" (ngModelChange)="selectCompany($event)">
+            <mat-option value="">{{ 'dashboard.allCompanies' | transloco }}</mat-option>
+            @for (c of companies(); track c.id) {
+              <mat-option [value]="c.id">{{ c.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'dashboard.agent' | transloco }}</mat-label>
+        <mat-select [ngModel]="agentId()" (ngModelChange)="agentId.set($event); reload()">
+          <mat-option value="">{{ 'common.all' | transloco }}</mat-option>
+          @for (a of agents(); track a.id) {
+            <mat-option [value]="a.id">{{ a.name }}{{ auth.isSuperAdmin() && !companyId() ? ' · ' + a.companyName : '' }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'dashboard.channel' | transloco }}</mat-label>
+        <mat-select [ngModel]="channel()" (ngModelChange)="channel.set($event); reload()">
+          <mat-option value="">{{ 'dashboard.customerChannels' | transloco }}</mat-option>
+          @for (c of channels; track c) {
+            <mat-option [value]="c">{{ 'channelTypes.' + c | transloco }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <div class="progress">
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+  </div>
+
+  @if (data(); as d) {
+    @if (!d.aiConfigured) {
+      <div class="card notice" role="status">
+        <mat-icon>info</mat-icon>
+        <span>{{ 'dashboard.demoNotice' | transloco }}</span>
+      </div>
+    }
+    @if (d.demoConversations > 0) {
+      <div class="card notice notice--demo" role="status">
+        <mat-icon>science</mat-icon>
+        <span>{{ 'dashboard.demoDataNotice' | transloco: { count: d.demoConversations, total: d.kpis.conversations } }}</span>
+      </div>
+    }
+    @if (!hasData()) {
+      <div class="card empty-state">{{ 'dashboard.empty' | transloco }}</div>
+    }
+
+    <section class="kpis" [attr.aria-label]="'dashboard.kpis' | transloco">
+      @for (c of cards(); track c.key) {
+        <article class="card kpi">
+          <header>
+            <mat-icon aria-hidden="true">{{ c.icon }}</mat-icon>
+            @if (termFor[c.key]; as term) {
+              <span><app-term [key]="term">{{ 'dashboard.kpi.' + c.key | transloco }}</app-term></span>
+            } @else {
+              <span>{{ 'dashboard.kpi.' + c.key | transloco }}</span>
+            }
+          </header>
+          <strong class="kpi__value">{{ c.value }}</strong>
+          <div class="kpi__foot">
+            @if (c.delta !== null) {
+              <span class="delta" [class.delta--good]="c.upIsGood !== null && (c.delta > 0) === c.upIsGood && c.delta !== 0"
+                [class.delta--bad]="c.upIsGood !== null && (c.delta > 0) !== c.upIsGood && c.delta !== 0"
+                [matTooltip]="'dashboard.vsPrevious' | transloco">
+                <mat-icon aria-hidden="true">{{ c.delta > 0 ? 'arrow_upward' : c.delta < 0 ? 'arrow_downward' : 'remove' }}</mat-icon>
+                {{ c.delta > 0 ? '+' : '' }}{{ c.delta }}{{ c.key === 'resolutionRate' ? ' p.p.' : '%' }}
+              </span>
+            }
+            @if (c.hint) {
+              <small>{{ c.hint }}</small>
+            }
+          </div>
+        </article>
+      }
+    </section>
+
+    <section class="charts">
+      <article class="card chart chart--wide">
+        <h2>{{ 'dashboard.charts.daily' | transloco }}</h2>
+        <app-chart [config]="dailyChart()" [label]="'dashboard.charts.daily' | transloco" />
+      </article>
+      <article class="card chart">
+        <h2>{{ 'dashboard.charts.channels' | transloco }}</h2>
+        @if (d.byChannel.length) {
+          <app-chart [config]="channelChart()" [label]="'dashboard.charts.channels' | transloco" />
+        } @else {
+          <p class="muted">{{ 'dashboard.noData' | transloco }}</p>
+        }
+      </article>
+      <article class="card chart">
+        <h2>{{ 'dashboard.charts.status' | transloco }}</h2>
+        @if (d.kpis.conversations) {
+          <app-chart [config]="statusChart()" [label]="'dashboard.charts.status' | transloco" />
+        } @else {
+          <p class="muted">{{ 'dashboard.noData' | transloco }}</p>
+        }
+      </article>
+      <article class="card chart">
+        <h2>{{ 'dashboard.charts.appointments' | transloco }}</h2>
+        <app-chart [config]="appointmentsChart()" [label]="'dashboard.charts.appointments' | transloco" />
+      </article>
+      <article class="card chart">
+        <h2>{{ 'dashboard.charts.cost' | transloco }}</h2>
+        @if (d.kpis.aiCalls > 0) {
+          <app-chart [config]="costChart()" [label]="'dashboard.charts.cost' | transloco" />
+          <small class="muted">{{ 'dashboard.costNote' | transloco }}</small>
+        } @else {
+          <p class="muted empty-chart">{{ 'dashboard.noRealCost' | transloco }}</p>
+        }
+      </article>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">{{ 'dashboard.byAgent' | transloco }}</h2>
+      @if (d.byAgent.length === 0) {
+        <p class="muted">{{ 'dashboard.noData' | transloco }}</p>
+      } @else {
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr>
+                <th>{{ 'dashboard.agent' | transloco }}</th>
+                <th class="num">{{ 'dashboard.kpi.conversations' | transloco }}</th>
+                <th class="num">{{ 'dashboard.kpi.transferred' | transloco }}</th>
+                <th class="num">{{ 'dashboard.aiReplies' | transloco }}</th>
+                <th class="num">{{ 'dashboard.kpi.avgResponse' | transloco }}</th>
+                <th class="num">{{ 'dashboard.kpi.aiCost' | transloco }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of d.byAgent; track a.agentId) {
+                <tr>
+                  <td><strong>{{ a.name }}</strong></td>
+                  <td class="num">{{ a.conversations }}</td>
+                  <td class="num">{{ a.transferred }}</td>
+                  <td class="num">{{ a.aiReplies }}</td>
+                  <td class="num">{{ formatMs(a.avgAIResponseMs) }}</td>
+                  <td class="num">{{ formatUsd(a.estimatedCostUsd) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      <p class="muted footnote">{{ 'dashboard.footnote' | transloco: { tz: d.period.timeZone } }}</p>
+    </section>
+  }
+</div>

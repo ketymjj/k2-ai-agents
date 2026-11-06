@@ -1,0 +1,405 @@
+<div class="page">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  } @else {
+    <header class="page-header">
+      <div class="title">
+        <a mat-icon-button routerLink="/agents" [attr.aria-label]="'common.back' | transloco">
+          <mat-icon>arrow_back</mat-icon>
+        </a>
+        <div>
+          @if (agent(); as a) {
+            <h1>
+              {{ a.name }}
+              <span
+                class="badge"
+                [class.badge--success]="a.status === 'Active'"
+                [class.badge--warning]="a.status === 'Draft'"
+                [class.badge--danger]="a.status === 'Inactive'"
+              >{{ 'agentStatus.' + a.status | transloco }}</span>
+            </h1>
+            <p>
+              {{ a.companyName }} · v{{ a.currentVersion }} ·
+              {{ 'agents.updatedAt' | transloco }} {{ a.updatedAt | date: 'dd/MM/yyyy HH:mm' }}
+            </p>
+          } @else {
+            <h1>{{ 'agents.newTitle' | transloco }}</h1>
+            <p>{{ 'agents.newSubtitle' | transloco }}</p>
+          }
+        </div>
+      </div>
+      @if (agent(); as a) {
+        <div class="header-actions">
+          <button mat-stroked-button type="button" (click)="versions()">
+            <mat-icon>history</mat-icon>{{ 'agents.versions' | transloco }}
+          </button>
+          @if (canManage()) {
+            <a mat-flat-button routerLink="/playground" [queryParams]="{ agentId: a.id }">
+              <mat-icon>science</mat-icon>{{ 'agents.test' | transloco }}
+            </a>
+            <button mat-stroked-button type="button" (click)="duplicate()">
+              <mat-icon>content_copy</mat-icon>{{ 'agents.duplicate' | transloco }}
+            </button>
+            <button mat-stroked-button type="button" (click)="toggleStatus()">
+              <mat-icon>{{ a.status === 'Active' ? 'pause_circle' : 'play_circle' }}</mat-icon>
+              {{ (a.status === 'Active' ? 'common.deactivate' : 'common.activate') | transloco }}
+            </button>
+          }
+        </div>
+      }
+    </header>
+
+  <app-module-guide module="agentEditor" learnTab="prompts" />
+
+    @if (!canManage()) {
+      <div class="notice">
+        <mat-icon>visibility</mat-icon>{{ 'agents.readOnly' | transloco }}
+      </div>
+    }
+
+    <section class="card wizard">
+      <mat-stepper
+        #stepper
+        [linear]="isNew()"
+        [orientation]="isMobile() ? 'vertical' : 'horizontal'"
+        (selectionChange)="onStepChange($event)"
+      >
+        <!-- 1. Tipo e identidade -->
+        <mat-step [stepControl]="basics" [label]="'agents.steps.basics' | transloco">
+          <form [formGroup]="basics" class="step">
+            <app-module-guide module="agentStep1" learnTab="prompts" />
+            <h2 class="step-title">{{ 'agents.chooseType' | transloco }}</h2>
+            <div class="type-grid" role="radiogroup">
+              @for (t of businessTypes; track t) {
+                <button
+                  type="button"
+                  class="type-card"
+                  role="radio"
+                  [attr.aria-checked]="basics.controls.businessType.value === t"
+                  [class.type-card--selected]="basics.controls.businessType.value === t"
+                  [disabled]="!canManage()"
+                  (click)="selectType(t)"
+                >
+                  <mat-icon>{{ icons[t] }}</mat-icon>
+                  <strong>{{ 'businessTypes.' + t | transloco }}</strong>
+                  <small>{{ 'businessTypeHints.' + t | transloco }}</small>
+                </button>
+              }
+            </div>
+
+            <div class="form-grid">
+              @if (isNew() && auth.isSuperAdmin()) {
+                <mat-form-field appearance="outline" class="full">
+                  <mat-label>{{ 'users.company' | transloco }}</mat-label>
+                  <mat-select formControlName="companyId">
+                    @for (c of companies(); track c.id) {
+                      <mat-option [value]="c.id">{{ c.name }}</mat-option>
+                    }
+                  </mat-select>
+                  @if (basics.controls.companyId.hasError('required')) {
+                    <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+                  }
+                </mat-form-field>
+              }
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'agents.name' | transloco }}</mat-label>
+                <input matInput formControlName="name" maxlength="80" [placeholder]="'agents.namePlaceholder' | transloco" />
+                <mat-hint>{{ 'agents.nameHint' | transloco }}</mat-hint>
+                @if (basics.controls.name.hasError('required')) {
+                  <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'agents.responseLanguage' | transloco }}</mat-label>
+                <mat-select formControlName="responseLanguage">
+                  @for (l of languages; track l) {
+                    <mat-option [value]="l">{{ 'languages.' + l | transloco }}</mat-option>
+                  }
+                </mat-select>
+                <mat-hint>{{ 'agents.responseLanguageHint' | transloco }}</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="full">
+                <mat-label>{{ 'agents.description' | transloco }} ({{ 'common.optional' | transloco }})</mat-label>
+                <input matInput formControlName="description" maxlength="500" />
+              </mat-form-field>
+            </div>
+            <div class="step-actions">
+              <span></span>
+              <button mat-flat-button matStepperNext type="button">{{ 'common.next' | transloco }}</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- 2. Comportamento -->
+        <mat-step [stepControl]="behavior" [label]="'agents.steps.behavior' | transloco">
+          <form [formGroup]="behavior" class="step">
+            <app-module-guide module="agentStep2" learnTab="prompts" />
+            <div class="step-head">
+              <p class="step-intro">{{ 'agents.behaviorIntro' | transloco }}</p>
+              @if (canManage()) {
+                <button mat-button type="button" (click)="applyTemplate()">
+                  <mat-icon>auto_awesome</mat-icon>{{ 'agents.applyTemplate' | transloco }}
+                </button>
+              }
+            </div>
+            <div class="form-grid">
+              <mat-form-field appearance="outline" class="full">
+                <mat-label>{{ 'agents.objective' | transloco }}</mat-label>
+                <textarea matInput formControlName="objective" rows="3" maxlength="1000"></textarea>
+                <mat-hint>{{ 'agents.objectiveHint' | transloco }}</mat-hint>
+                @if (behavior.controls.objective.hasError('required')) {
+                  <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'agents.personality' | transloco }}</mat-label>
+                <input matInput formControlName="personality" maxlength="300" />
+                <mat-hint>{{ 'agents.personalityHint' | transloco }}</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'agents.tone' | transloco }}</mat-label>
+                <input matInput formControlName="tone" maxlength="200" />
+                <mat-hint>{{ 'agents.toneHint' | transloco }}</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'agents.companyDisplayName' | transloco }} ({{ 'common.optional' | transloco }})</mat-label>
+                <input matInput formControlName="companyDisplayName" maxlength="160" />
+                <mat-hint>{{ 'agents.companyDisplayNameHint' | transloco }}</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'agents.businessHours' | transloco }} ({{ 'common.optional' | transloco }})</mat-label>
+                <input matInput formControlName="businessHours" maxlength="500" />
+              </mat-form-field>
+            </div>
+            <div class="step-actions">
+              <button mat-button matStepperPrevious type="button">{{ 'common.back' | transloco }}</button>
+              <button mat-flat-button matStepperNext type="button">{{ 'common.next' | transloco }}</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- 3. Conhecimento rápido e regras -->
+        <mat-step [stepControl]="rules" [label]="'agents.steps.rules' | transloco">
+          <form [formGroup]="rules" class="step">
+            <app-module-guide module="agentStep3" learnTab="glossary" />
+            <section class="list-section">
+              <header>
+                <div>
+                  <h3><app-term key="faq">{{ 'agents.faqs' | transloco }}</app-term></h3>
+                  <p>{{ 'agents.faqsHint' | transloco }}</p>
+                </div>
+                @if (canManage()) {
+                  <button mat-stroked-button type="button" (click)="addFaq()" [disabled]="faqs.length >= 50">
+                    <mat-icon>add</mat-icon>{{ 'agents.addFaq' | transloco }}
+                  </button>
+                }
+              </header>
+              <div formArrayName="faqs" class="faq-list">
+                @for (faq of faqs.controls; track faq; let i = $index) {
+                  <div class="faq-item" [formGroupName]="i">
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                      <mat-label>{{ 'agents.question' | transloco }}</mat-label>
+                      <input matInput formControlName="question" maxlength="300" />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                      <mat-label>{{ 'agents.answer' | transloco }}</mat-label>
+                      <textarea matInput formControlName="answer" rows="2" maxlength="2000"></textarea>
+                    </mat-form-field>
+                    @if (canManage()) {
+                      <button mat-icon-button type="button" (click)="remove(faqs, i)" [attr.aria-label]="'agents.remove' | transloco">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    }
+                  </div>
+                } @empty {
+                  <p class="empty-list">{{ 'agents.noFaqs' | transloco }}</p>
+                }
+              </div>
+            </section>
+
+            <section class="list-section">
+              <header>
+                <div>
+                  <h3>{{ 'agents.restrictions' | transloco }}</h3>
+                  <p>{{ 'agents.restrictionsHint' | transloco }}</p>
+                </div>
+                @if (canManage()) {
+                  <button mat-stroked-button type="button" (click)="addRule(restrictions)" [disabled]="restrictions.length >= 30">
+                    <mat-icon>add</mat-icon>{{ 'agents.addRule' | transloco }}
+                  </button>
+                }
+              </header>
+              <div formArrayName="restrictions" class="rule-list">
+                @for (rule of restrictions.controls; track rule; let i = $index) {
+                  <div class="rule-item">
+                    <mat-icon class="rule-icon rule-icon--block">block</mat-icon>
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                      <input matInput [formControlName]="i" maxlength="300" [attr.aria-label]="'agents.restrictions' | transloco" />
+                    </mat-form-field>
+                    @if (canManage()) {
+                      <button mat-icon-button type="button" (click)="remove(restrictions, i)" [attr.aria-label]="'agents.remove' | transloco">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            </section>
+
+            <section class="list-section">
+              <header>
+                <div>
+                  <h3><app-term key="handoff">{{ 'agents.handoffRules' | transloco }}</app-term></h3>
+                  <p>{{ 'agents.handoffRulesHint' | transloco }}</p>
+                </div>
+                @if (canManage()) {
+                  <button mat-stroked-button type="button" (click)="addRule(handoffRules)" [disabled]="handoffRules.length >= 20">
+                    <mat-icon>add</mat-icon>{{ 'agents.addRule' | transloco }}
+                  </button>
+                }
+              </header>
+              <div formArrayName="handoffRules" class="rule-list">
+                @for (rule of handoffRules.controls; track rule; let i = $index) {
+                  <div class="rule-item">
+                    <mat-icon class="rule-icon">support_agent</mat-icon>
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                      <input matInput [formControlName]="i" maxlength="300" [attr.aria-label]="'agents.handoffRules' | transloco" />
+                    </mat-form-field>
+                    @if (canManage()) {
+                      <button mat-icon-button type="button" (click)="remove(handoffRules, i)" [attr.aria-label]="'agents.remove' | transloco">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            </section>
+            <div class="step-actions">
+              <button mat-button matStepperPrevious type="button">{{ 'common.back' | transloco }}</button>
+              <button mat-flat-button matStepperNext type="button">{{ 'common.next' | transloco }}</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- 4. Modelo -->
+        <mat-step [stepControl]="modelSettings" [label]="'agents.steps.model' | transloco">
+          <form [formGroup]="modelSettings" class="step">
+            <app-module-guide module="agentStep4" learnTab="costs" />
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label><app-term key="model">{{ 'agents.model' | transloco }}</app-term></mat-label>
+                <mat-select formControlName="model">
+                  @for (m of models(); track m.id) {
+                    <mat-option [value]="m.id">{{ m.label }} · {{ m.provider }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label><app-term key="token">{{ 'agents.maxTokens' | transloco }}</app-term></mat-label>
+                <input matInput type="number" min="50" max="4000" formControlName="maxOutputTokens" />
+                <mat-hint>{{ 'agents.maxTokensHint' | transloco }}</mat-hint>
+                @if (modelSettings.controls.maxOutputTokens.invalid) {
+                  <mat-error>{{ 'errors.range' | transloco: { min: 50, max: 4000 } }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            @if (selectedModel(); as m) {
+              <div class="cost-box">
+                <mat-icon>payments</mat-icon>
+                <div>
+                  <strong><app-term key="estimatedCost">{{ 'agents.costTitle' | transloco }}</app-term></strong>
+                  <p>
+                    {{ 'agents.costPrices' | transloco: { input: (m.inputPricePer1M | number: '1.2-2' : locale()), output: (m.outputPricePer1M | number: '1.2-2' : locale()) } }}
+                    · {{ 'agents.costPerExchange' | transloco: { value: (estimateCost(m) | number: '1.4-4' : locale()) } }}
+                  </p>
+                  <small>{{ 'agents.costDisclaimer' | transloco }}</small>
+                </div>
+              </div>
+            }
+
+            <div class="slider-field">
+              <label for="temperature">
+                <app-term key="temperature">{{ 'agents.temperature' | transloco }}</app-term>: <strong>{{ temperature() | number: '1.1-1' : locale() }}</strong>
+              </label>
+              <mat-slider min="0" max="1" step="0.1" discrete [disabled]="!canManage()">
+                <input matSliderThumb id="temperature" formControlName="temperature" />
+              </mat-slider>
+              <div class="slider-legend">
+                <span>{{ 'agents.temperatureLow' | transloco }}</span>
+                <span>{{ 'agents.temperatureHigh' | transloco }}</span>
+              </div>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>{{ 'agents.welcomeMessage' | transloco }} ({{ 'common.optional' | transloco }})</mat-label>
+              <textarea matInput formControlName="welcomeMessage" rows="2" maxlength="1000"></textarea>
+              <mat-hint>{{ 'agents.welcomeMessageHint' | transloco }}</mat-hint>
+            </mat-form-field>
+            <div class="step-actions">
+              <button mat-button matStepperPrevious type="button">{{ 'common.back' | transloco }}</button>
+              <button mat-flat-button matStepperNext type="button">{{ 'common.next' | transloco }}</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- 5. Revisão do prompt -->
+        <mat-step [stepControl]="review" [label]="'agents.steps.review' | transloco">
+          <form [formGroup]="review" class="step">
+            <app-module-guide module="agentStep5" learnTab="prompts" />
+            <div class="step-head">
+              <p class="step-intro">{{ 'agents.reviewIntro' | transloco }}</p>
+              @if (canManage()) {
+                <button mat-button type="button" (click)="regeneratePrompt()" [disabled]="generating()">
+                  <mat-icon>refresh</mat-icon>{{ 'agents.regenerate' | transloco }}
+                </button>
+              }
+            </div>
+            @if (generating()) {
+              <mat-progress-bar mode="indeterminate" />
+            }
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label><app-term key="systemPrompt">{{ 'agents.systemPrompt' | transloco }}</app-term></mat-label>
+              <textarea matInput class="prompt-input" formControlName="systemPrompt" rows="18" maxlength="20000" (input)="onPromptInput()"></textarea>
+              <mat-hint align="end">{{ review.controls.systemPrompt.value.length }} / 20000</mat-hint>
+              @if (review.controls.systemPrompt.hasError('required')) {
+                <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+              }
+            </mat-form-field>
+            @if (promptEdited() && agent()) {
+              <p class="hint-line"><mat-icon>edit_note</mat-icon>{{ 'agents.promptEditedHint' | transloco }}</p>
+            }
+
+            <details class="platform-rules">
+              <summary><mat-icon>shield</mat-icon><app-term key="promptInjection">{{ 'agents.platformRulesTitle' | transloco }}</app-term></summary>
+              <p>{{ 'agents.platformRulesHint' | transloco }}</p>
+              @if (platformRules()) {
+                <pre>{{ platformRules() }}</pre>
+              }
+            </details>
+
+            @if (agent() && canManage()) {
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>{{ 'agents.changeNote' | transloco }} ({{ 'common.optional' | transloco }})</mat-label>
+                <input matInput formControlName="changeNote" maxlength="300" [placeholder]="'agents.changeNotePlaceholder' | transloco" />
+              </mat-form-field>
+            }
+
+            @if (serverError(); as message) {
+              <div class="alert" role="alert">{{ message }}</div>
+            }
+            <div class="step-actions">
+              <button mat-button matStepperPrevious type="button">{{ 'common.back' | transloco }}</button>
+              @if (canManage()) {
+                <button mat-flat-button type="button" (click)="save()" [disabled]="saving() || generating()">
+                  <mat-icon>save</mat-icon>
+                  {{ (saving() ? 'common.saving' : agent() ? 'agents.saveChanges' : 'agents.createAgent') | transloco }}
+                </button>
+              }
+            </div>
+          </form>
+        </mat-step>
+      </mat-stepper>
+    </section>
+  }
+</div>

@@ -1,0 +1,162 @@
+.alert {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--k2-red);
+}
+
+.summary {
+  margin-bottom: 12px;
+
+  dl {
+    display: grid;
+    gap: 8px;
+    margin: 10px 0 0;
+  }
+
+  dt {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.summary__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  strong {
+    font-size: 17px;
+  }
+}
+
+.status {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--surface-2);
+  color: var(--text-muted);
+
+  &--Scheduled {
+    background: rgba(46, 144, 250, 0.14);
+    color: var(--k2-blue);
+  }
+
+  &--Confirmed {
+    background: var(--success-soft);
+    color: var(--k2-green);
+  }
+
+  &--Cancelled {
+    background: var(--danger-soft);
+    color: var(--k2-red);
+  }
+
+  &--NoShow {
+    background: var(--warning-soft);
+    color: var(--k2-amber);
+  }
+}
+
+.picker {
+  h3 {
+    margin: 0 0 10px;
+    font-size: 14px;
+  }
+
+  h4 {
+    margin: 16px 0 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  .mat-mdc-form-field {
+    flex: 1 1 200px;
+  }
+}
+
+.slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 6px;
+}
+
+.slot {
+  padding: 8px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--primary);
+  }
+
+  &--selected {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: var(--primary-contrast);
+  }
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.manual {
+  margin-top: 12px;
+
+  summary {
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+}
+
+.chosen-contact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+}
+
+.full {
+  width: 100%;
+}
+
+.notes {
+  margin-top: 12px;
+}
+
+.status-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-right: auto;
+}
+
+.danger {
+  --mat-button-outlined-label-text-color: var(--k2-red);
+}

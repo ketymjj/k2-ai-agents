@@ -1,0 +1,108 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'appointments.title' | transloco }}</h1>
+      <p>{{ 'appointments.subtitle' | transloco }}</p>
+    </div>
+    <div class="header-actions">
+      @if (canConfigure() && settings()) {
+        <button mat-stroked-button type="button" (click)="configure()"><mat-icon>tune</mat-icon>{{ 'appointments.configure' | transloco }}</button>
+      }
+      @if (canBook() && settings()) {
+        <button mat-flat-button type="button" (click)="open(null)" [disabled]="!hasServices()"><mat-icon>event_available</mat-icon>{{ 'appointments.new' | transloco }}</button>
+      }
+    </div>
+  </header>
+
+  <app-module-guide module="appointments" learnTab="demo" />
+
+  @if (auth.isSuperAdmin()) {
+    <section class="card company-pick">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'users.company' | transloco }}</mat-label>
+        <mat-select [ngModel]="companyId()" (ngModelChange)="selectCompany($event)">
+          @for (c of companies(); track c.id) {
+            <mat-option [value]="c.id">{{ c.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </section>
+  }
+
+  @if (needsCompany()) {
+    <div class="card empty-state">{{ 'appointments.pickCompany' | transloco }}</div>
+  } @else {
+    @if (settings() && !hasServices()) {
+      <div class="card notice" role="status">
+        <mat-icon>info</mat-icon>
+        <span>{{ 'appointments.noServices' | transloco }}</span>
+        @if (canConfigure()) {
+          <button mat-stroked-button type="button" (click)="configure()">{{ 'appointments.configure' | transloco }}</button>
+        }
+      </div>
+    }
+
+    <section class="card">
+      <div class="toolbar calendar-toolbar">
+        <div class="nav">
+          <button mat-icon-button type="button" (click)="move(-1)" [attr.aria-label]="'appointments.prevWeek' | transloco" [matTooltip]="'appointments.prevWeek' | transloco">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <button mat-stroked-button type="button" (click)="today()">{{ 'appointments.today' | transloco }}</button>
+          <button mat-icon-button type="button" (click)="move(1)" [attr.aria-label]="'appointments.nextWeek' | transloco" [matTooltip]="'appointments.nextWeek' | transloco">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+          <h2 class="range">{{ start() | date: 'dd MMM' : undefined : locale() }} – {{ lastDay() | date: 'dd MMM yyyy' : undefined : locale() }}</h2>
+        </div>
+        <span class="muted counts">{{ 'appointments.weekCounts' | transloco: counts() }}</span>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'common.status' | transloco }}</mat-label>
+          <mat-select [ngModel]="status()" (ngModelChange)="setStatus($event)">
+            <mat-option value="">{{ 'common.all' | transloco }}</mat-option>
+            @for (s of statuses; track s) {
+              <mat-option [value]="s">{{ 'appointmentStatus.' + s | transloco }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="progress">
+        @if (loading()) {
+          <mat-progress-bar mode="indeterminate" />
+        }
+      </div>
+
+      <div class="week">
+        @for (d of days(); track d.key) {
+          <div class="day" [class.day--today]="d.isToday" [class.day--past]="d.isPast">
+            <header class="day__head">
+              <span class="day__name">{{ d.date | date: 'EEE' : undefined : locale() }}</span>
+              <span class="day__num">{{ d.date | date: 'dd/MM' }}</span>
+              @if (canBook() && hasServices() && !d.isPast) {
+                <button mat-icon-button type="button" class="day__add" (click)="open(null, d.key)" [attr.aria-label]="'appointments.newOn' | transloco: { date: (d.date | date: 'dd/MM') }">
+                  <mat-icon>add</mat-icon>
+                </button>
+              }
+            </header>
+            <div class="day__items">
+              @for (a of d.items; track a.id) {
+                <button type="button" class="appt appt--{{ a.status }}" (click)="open(a)">
+                  <span class="appt__time">{{ a.startDateTime | date: 'HH:mm' }}–{{ a.endDateTime | date: 'HH:mm' }}</span>
+                  <span class="appt__service">{{ a.serviceName }}</span>
+                  <span class="appt__who">{{ a.contactName ?? ('appointments.noCustomer' | transloco) }}</span>
+                  <span class="appt__meta">
+                    @if (a.source === 'Agent') {
+                      <mat-icon [attr.aria-label]="'appointments.sources.Agent' | transloco">smart_toy</mat-icon>
+                    }
+                    {{ 'appointmentStatus.' + a.status | transloco }}
+                  </span>
+                </button>
+              } @empty {
+                <span class="day__empty">—</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>

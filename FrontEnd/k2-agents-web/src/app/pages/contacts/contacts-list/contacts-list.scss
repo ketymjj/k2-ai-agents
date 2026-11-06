@@ -1,0 +1,146 @@
+.funnel {
+  margin-bottom: 20px;
+  padding: 16px;
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 15px;
+  }
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.stages {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+
+  @media (max-width: 700px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.stage {
+  --stage-color: var(--k2-blue);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--stage-color);
+  }
+
+  &--active {
+    border-color: var(--stage-color);
+    box-shadow: 0 0 0 1px var(--stage-color);
+  }
+
+  &--InService {
+    --stage-color: var(--k2-amber);
+  }
+
+  &--Qualified {
+    --stage-color: var(--k2-purple);
+  }
+
+  &--Converted {
+    --stage-color: var(--k2-green);
+  }
+
+  &--Lost {
+    --stage-color: var(--text-muted);
+  }
+}
+
+.stage__count {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stage__label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.stage__bar {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    background: var(--stage-color);
+  }
+}
+
+.progress {
+  height: 4px;
+  margin-top: 12px;
+}
+
+.link {
+  color: inherit;
+  text-decoration: none;
+
+  strong {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &:hover strong {
+    color: var(--primary);
+  }
+}
+
+.stage-badge {
+  &--New {
+    background: rgba(46, 144, 250, 0.14);
+    color: var(--k2-blue);
+  }
+
+  &--InService {
+    background: var(--warning-soft);
+    color: var(--k2-amber);
+  }
+
+  &--Qualified {
+    background: var(--primary-soft);
+    color: var(--primary);
+  }
+
+  &--Converted {
+    background: var(--success-soft);
+    color: var(--k2-green);
+  }
+}
+
+tr.anon td {
+  opacity: 0.6;
+  font-style: italic;
+}

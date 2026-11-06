@@ -1,0 +1,238 @@
+<div class="page playground-page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'playground.title' | transloco }}</h1>
+      <p>{{ 'playground.subtitle' | transloco }}</p>
+    </div>
+  </header>
+
+  <app-module-guide module="playground" learnTab="demo" />
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  } @else if (agents().length === 0) {
+    <div class="card empty-state">
+      <mat-icon class="empty-icon">smart_toy</mat-icon>
+      <p>{{ 'playground.noAgents' | transloco }}</p>
+      <a mat-stroked-button routerLink="/agents/new">{{ 'agents.createFirst' | transloco }}</a>
+    </div>
+  } @else {
+    @if (status() && !aiConfigured()) {
+      <div class="banner banner--warning" role="status">
+        <mat-icon>key_off</mat-icon>
+        <div>
+          <strong>{{ 'playground.noKeyTitle' | transloco }}</strong>
+          <p>{{ 'playground.noKeyText' | transloco }}</p>
+        </div>
+      </div>
+    }
+
+    <div class="layout">
+      <section class="card chat">
+        <header class="chat__header">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="agent-select">
+            <mat-label>{{ 'playground.agent' | transloco }}</mat-label>
+            <mat-select [formControl]="agentControl">
+              @for (a of agents(); track a.id) {
+                <mat-option [value]="a.id">{{ a.name }} · {{ 'agentStatus.' + a.status | transloco }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <span class="mode-chip" [class.mode-chip--simulated]="simulatedMode()">
+            <mat-icon>{{ simulatedMode() ? 'science' : 'bolt' }}</mat-icon>
+            {{ (simulatedMode() ? 'playground.modeSimulated' : 'playground.modeReal') | transloco }}
+          </span>
+          <button mat-stroked-button type="button" (click)="clear()" [disabled]="!session() || sending()">
+            <mat-icon>restart_alt</mat-icon>{{ 'playground.clear' | transloco }}
+          </button>
+        </header>
+
+        <div class="chat__messages" #scroller aria-live="polite">
+          @for (m of messages(); track m.id) {
+            @switch (m.senderType) {
+              @case ('Contact') {
+                <div class="msg msg--user">
+                  <div class="bubble"><span class="text">{{ m.content }}</span></div>
+                </div>
+              }
+              @case ('System') {
+                <div class="msg msg--agent">
+                  <span class="avatar">{{ agent()?.name?.charAt(0) }}</span>
+                  <div>
+                    <div class="bubble bubble--welcome"><span class="text">{{ m.content }}</span></div>
+                    <div class="meta">{{ 'playground.welcome' | transloco }}</div>
+                  </div>
+                </div>
+              }
+              @default {
+                <div class="msg msg--agent">
+                  <span class="avatar">{{ agent()?.name?.charAt(0) }}</span>
+                  <div>
+                    <div class="bubble" [class.bubble--simulated]="m.isSimulated">
+                      @if (m.isSimulated) {
+                        <span class="sim-badge" [matTooltip]="'playground.simulatedTooltip' | transloco">
+                          <mat-icon>science</mat-icon>{{ 'playground.simulatedBadge' | transloco }}
+                        </span>
+                      }
+                      <span class="text">{{ m.content }}</span>
+                    </div>
+                    @if (handoffReplies().has(m.id)) {
+                      <div class="handoff-note">
+                        <mat-icon>support_agent</mat-icon>{{ 'playground.handoffNote' | transloco }}
+                      </div>
+                    }
+                    @if (m.sources.length > 0) {
+                      <div class="sources">
+                        <mat-icon>menu_book</mat-icon>
+                        <span><app-term key="rag">{{ 'playground.sources' | transloco }}</app-term>:</span>
+                        @for (s of m.sources; track s.documentId) {
+                          <span class="source-chip">{{ s.title }}</span>
+                        }
+                      </div>
+                    }
+                    <div class="meta">
+                      {{ m.createdAt | date: 'HH:mm' }}
+                      @if (!m.isSimulated) {
+                        · {{ 'playground.tokens' | transloco: { input: m.inputTokens, output: m.outputTokens } }}
+                        @if (m.responseTimeMs !== null) {
+                          · {{ (m.responseTimeMs / 1000) | number: '1.1-1' : locale() }} s
+                        }
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          } @empty {
+            <p class="chat__empty">{{ 'playground.startHint' | transloco }}</p>
+          }
+
+          @if (pendingText(); as text) {
+            <div class="msg msg--user msg--pending">
+              <div class="bubble"><span class="text">{{ text }}</span></div>
+            </div>
+          }
+          @if (sending()) {
+            <div class="msg msg--agent">
+              <span class="avatar">{{ agent()?.name?.charAt(0) }}</span>
+              <div class="bubble typing" [attr.aria-label]="'playground.typing' | transloco">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          }
+          @if (failed(); as f) {
+            <div class="msg msg--user msg--failed">
+              <div>
+                <div class="bubble"><span class="text">{{ f.content }}</span></div>
+                <div class="error-line" role="alert">
+                  <mat-icon>error</mat-icon>
+                  <span>{{ f.message }}</span>
+                  <button mat-button type="button" (click)="retry()">{{ 'common.retry' | transloco }}</button>
+                  <button mat-button type="button" (click)="editFailed()">{{ 'common.edit' | transloco }}</button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <form class="composer" (ngSubmit)="send()">
+          <textarea
+            #messageInput
+            rows="1"
+            [ngModel]="draft()"
+            (ngModelChange)="draft.set($event)"
+            name="message"
+            [attr.maxlength]="maxChars()"
+            [placeholder]="'playground.placeholder' | transloco"
+            [attr.aria-label]="'playground.placeholder' | transloco"
+            (keydown)="onKeydown($event)"
+            [disabled]="!session()"
+          ></textarea>
+          <button mat-flat-button type="submit" class="send" [disabled]="!canSend()" [attr.aria-label]="'playground.send' | transloco">
+            <mat-icon>send</mat-icon>
+          </button>
+        </form>
+        <div class="composer__hint">
+          <span>{{ 'playground.enterHint' | transloco }}</span>
+          <span [class.over]="draft().length > maxChars() * 0.9">{{ draft().length }} / {{ maxChars() }}</span>
+        </div>
+      </section>
+
+      <aside class="side">
+        @if (agent(); as a) {
+          <section class="card panel">
+            <header class="panel__head">
+              <h2>{{ a.name }}</h2>
+              <span
+                class="badge"
+                [class.badge--success]="a.status === 'Active'"
+                [class.badge--warning]="a.status === 'Draft'"
+              >{{ 'agentStatus.' + a.status | transloco }}</span>
+            </header>
+            <dl class="facts">
+              <div><dt>{{ 'agents.type' | transloco }}</dt><dd>{{ 'businessTypes.' + a.businessType | transloco }}</dd></div>
+              <div><dt><app-term key="model">{{ 'agents.model' | transloco }}</app-term></dt><dd>{{ a.model }}</dd></div>
+              <div><dt><app-term key="temperature">{{ 'agents.temperatureShort' | transloco }}</app-term></dt><dd>{{ a.temperature | number: '1.1-1' : locale() }}</dd></div>
+              <div><dt><app-term key="token">{{ 'agents.maxTokens' | transloco }}</app-term></dt><dd>{{ a.maxOutputTokens }}</dd></div>
+              <div><dt>{{ 'agents.responseLanguage' | transloco }}</dt><dd>{{ 'languages.' + a.responseLanguage | transloco }}</dd></div>
+              <div><dt>{{ 'playground.version' | transloco }}</dt><dd>v{{ a.currentVersion }}</dd></div>
+            </dl>
+            <a mat-stroked-button class="full" [routerLink]="['/agents', a.id]">
+              <mat-icon>tune</mat-icon>{{ 'playground.editAgent' | transloco }}
+            </a>
+          </section>
+
+          <section class="card panel">
+            <h2><app-term key="simulatedMode">{{ 'playground.modeTitle' | transloco }}</app-term></h2>
+            <mat-slide-toggle
+              [checked]="simulatedMode()"
+              [disabled]="!aiConfigured()"
+              (change)="simulate.set($event.checked)"
+            >{{ 'playground.simulateToggle' | transloco }}</mat-slide-toggle>
+            <p class="muted">
+              {{ (aiConfigured() ? 'playground.simulateHintConfigured' : 'playground.simulateHintNoKey') | transloco }}
+            </p>
+            @if (status(); as s) {
+              @if (s.aiConfigured) {
+                <p class="muted">
+                  {{ 'playground.usageToday' | transloco: { used: s.requestsToday, limit: s.dailyRequestLimit } }}
+                </p>
+              }
+            }
+          </section>
+
+          <section class="card panel">
+            <h2>{{ 'playground.sessionTitle' | transloco }}</h2>
+            <dl class="stats">
+              <div><dt>{{ 'playground.aiReplies' | transloco }}</dt><dd>{{ totals().requests }}</dd></div>
+              <div><dt>{{ 'playground.simulatedReplies' | transloco }}</dt><dd>{{ totals().simulatedReplies }}</dd></div>
+              <div><dt><app-term key="token">{{ 'playground.inputTokens' | transloco }}</app-term></dt><dd>{{ totals().inputTokens }}</dd></div>
+              <div><dt>{{ 'playground.outputTokens' | transloco }}</dt><dd>{{ totals().outputTokens }}</dd></div>
+              <div class="wide">
+                <dt><app-term key="estimatedCost">{{ 'playground.estimatedCost' | transloco }}</app-term></dt>
+                <dd>US$ {{ totals().estimatedCostUsd | number: '1.4-6' : locale() }}</dd>
+              </div>
+            </dl>
+            <small class="muted">{{ 'agents.costDisclaimer' | transloco }}</small>
+          </section>
+
+          @if (history().length > 1) {
+            <section class="card panel">
+              <h2>{{ 'playground.previousSessions' | transloco }}</h2>
+              <ul class="sessions">
+                @for (h of history(); track h.id) {
+                  <li>
+                    <button type="button" [class.active]="h.id === session()?.id" (click)="openSession(h)">
+                      <span>{{ h.startedAt | date: 'dd/MM HH:mm' }}</span>
+                      <small>{{ 'playground.messagesCount' | transloco: { count: h.messageCount } }}</small>
+                    </button>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+        }
+      </aside>
+    </div>
+  }
+</div>

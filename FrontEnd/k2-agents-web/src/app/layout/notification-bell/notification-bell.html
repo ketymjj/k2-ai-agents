@@ -1,0 +1,32 @@
+<button
+  mat-icon-button
+  type="button"
+  [matMenuTriggerFor]="menu"
+  (menuOpened)="load()"
+  [matTooltip]="'notifications.title' | transloco"
+  [attr.aria-label]="'notifications.title' | transloco"
+>
+  <mat-icon [matBadge]="unread() > 9 ? '9+' : unread()" [matBadgeHidden]="unread() === 0" matBadgeColor="warn">
+    notifications
+  </mat-icon>
+</button>
+<mat-menu #menu="matMenu" xPosition="before" class="notification-menu">
+  <div class="head" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="presentation">
+    <strong>{{ 'notifications.title' | transloco }}</strong>
+    @if (unread() > 0) {
+      <button mat-button type="button" (click)="markAll($event)">{{ 'notifications.markAll' | transloco }}</button>
+    }
+  </div>
+  @for (n of items(); track n.id) {
+    <button mat-menu-item type="button" class="item" [class.item--unread]="!n.isRead" (click)="open(n)">
+      <mat-icon>{{ icons[n.type] }}</mat-icon>
+      <span class="text">
+        <strong>{{ n.title }}</strong>
+        <small>{{ n.message }}</small>
+        <small class="time">{{ n.createdAt | date: 'dd/MM HH:mm' }}</small>
+      </span>
+    </button>
+  } @empty {
+    <p class="empty">{{ 'notifications.empty' | transloco }}</p>
+  }
+</mat-menu>

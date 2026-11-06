@@ -1,0 +1,110 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'companies.title' | transloco }}</h1>
+      <p>{{ 'companies.subtitle' | transloco }}</p>
+    </div>
+    <button mat-flat-button type="button" (click)="openDialog()">
+      <mat-icon>add</mat-icon>
+      {{ 'companies.new' | transloco }}
+    </button>
+  </header>
+
+  <app-module-guide module="companies" />
+
+  <section class="card">
+    <div class="toolbar">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="grow">
+        <mat-label>{{ 'common.search' | transloco }}</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [formControl]="search" [placeholder]="'companies.searchPlaceholder' | transloco" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'common.status' | transloco }}</mat-label>
+        <mat-select [formControl]="status">
+          <mat-option value="">{{ 'common.all' | transloco }}</mat-option>
+          <mat-option value="Active">{{ 'companyStatus.Active' | transloco }}</mat-option>
+          <mat-option value="Inactive">{{ 'companyStatus.Inactive' | transloco }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="progress">
+      @if (loading()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+    </div>
+
+    @if (failed()) {
+      <div class="empty-state">
+        <p>{{ 'errors.unexpected' | transloco }}</p>
+        <button mat-stroked-button type="button" (click)="reload()">{{ 'common.retry' | transloco }}</button>
+      </div>
+    } @else if (!loading() && companies().length === 0) {
+      <div class="empty-state">{{ 'companies.empty' | transloco }}</div>
+    } @else {
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>{{ 'companies.name' | transloco }}</th>
+              <th>{{ 'companies.document' | transloco }}</th>
+              <th>{{ 'companies.industry' | transloco }}</th>
+              <th>{{ 'companies.agents' | transloco }}</th>
+              <th>{{ 'companies.users' | transloco }}</th>
+              <th>{{ 'common.status' | transloco }}</th>
+              <th>{{ 'companies.createdAt' | transloco }}</th>
+              <th><span class="sr-only">{{ 'common.actions' | transloco }}</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (company of companies(); track company.id) {
+              <tr>
+                <td>
+                  <a class="primary-cell link" [routerLink]="['/companies', company.id]">
+                    <strong>{{ company.name }}</strong>
+                    <small>{{ company.email ?? '—' }}</small>
+                  </a>
+                </td>
+                <td>{{ company.document | document }}</td>
+                <td>{{ company.industry ?? '—' }}</td>
+                <td>{{ company.agentCount }}</td>
+                <td>{{ company.userCount }}</td>
+                <td>
+                  <span class="badge" [class.badge--success]="company.status === 'Active'" [class.badge--danger]="company.status !== 'Active'">
+                    {{ 'companyStatus.' + company.status | transloco }}
+                  </span>
+                </td>
+                <td>{{ company.createdAt | date: 'dd/MM/yyyy' }}</td>
+                <td class="actions">
+                  <button mat-icon-button type="button" [matMenuTriggerFor]="menu" [attr.aria-label]="'common.actions' | transloco">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu" xPosition="before">
+                    <a mat-menu-item [routerLink]="['/companies', company.id]">
+                      <mat-icon>visibility</mat-icon>{{ 'common.details' | transloco }}
+                    </a>
+                    <button mat-menu-item type="button" (click)="openDialog(company)">
+                      <mat-icon>edit</mat-icon>{{ 'common.edit' | transloco }}
+                    </button>
+                    <button mat-menu-item type="button" (click)="toggleStatus(company)">
+                      <mat-icon>{{ company.status === 'Active' ? 'block' : 'check_circle' }}</mat-icon>
+                      {{ (company.status === 'Active' ? 'common.deactivate' : 'common.activate') | transloco }}
+                    </button>
+                  </mat-menu>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <mat-paginator
+        [length]="total()"
+        [pageIndex]="page()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPage($event)"
+      />
+    }
+  </section>
+</div>

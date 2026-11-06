@@ -1,0 +1,23 @@
+@if (learning.enabled() && content().title) {
+  <aside class="guide" [class.guide--min]="minimized()" [attr.aria-label]="'learn.guideLabel' | transloco">
+    <header class="guide__head">
+      <mat-icon aria-hidden="true">school</mat-icon>
+      <strong>{{ content().title }}</strong>
+      <button mat-icon-button type="button" class="guide__toggle" (click)="toggleMinimized()" [attr.aria-expanded]="!minimized()"
+        [attr.aria-label]="(minimized() ? 'learn.expandGuide' : 'learn.minimizeGuide') | transloco">
+        <mat-icon>{{ minimized() ? 'expand_more' : 'expand_less' }}</mat-icon>
+      </button>
+    </header>
+    @if (!minimized()) {
+      <p class="guide__body">{{ content().body }}</p>
+      @if (content().steps.length) {
+        <ol class="guide__steps">
+          @for (step of content().steps; track $index) {
+            <li>{{ step }}</li>
+          }
+        </ol>
+      }
+      <a class="guide__more" [routerLink]="['/learn']" [queryParams]="{ tab: learnTab() }">{{ 'learn.more' | transloco }} →</a>
+    }
+  </aside>
+}

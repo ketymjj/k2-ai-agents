@@ -1,0 +1,73 @@
+<h2 mat-dialog-title>{{ 'knowledge.uploadTitle' | transloco }}</h2>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    <label
+      class="dropzone"
+      [class.dropzone--active]="dragging()"
+      [class.dropzone--filled]="file()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="dragging.set(false)"
+      (drop)="onDrop($event)"
+    >
+      <input type="file" [accept]="accept" (change)="onFileInput($event)" [disabled]="progress() !== null" />
+      @if (file(); as f) {
+        <mat-icon>description</mat-icon>
+        <strong>{{ f.name }}</strong>
+        <small>{{ formatBytes(f.size) }} · {{ 'knowledge.changeFile' | transloco }}</small>
+      } @else {
+        <mat-icon>cloud_upload</mat-icon>
+        <strong>{{ 'knowledge.dropHere' | transloco }}</strong>
+        <small>{{ 'knowledge.allowedFiles' | transloco }}</small>
+      }
+    </label>
+    @if (fileError(); as e) {
+      <p class="field-error" role="alert">{{ e }}</p>
+    }
+
+    <div class="fields">
+      @if (data.isSuperAdmin) {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'users.company' | transloco }}</mat-label>
+          <mat-select formControlName="companyId">
+            @for (c of data.companies; track c.id) {
+              <mat-option [value]="c.id">{{ c.name }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.companyId.hasError('required')) {
+            <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+          }
+        </mat-form-field>
+      }
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'knowledge.title' | transloco }} ({{ 'common.optional' | transloco }})</mat-label>
+        <input matInput formControlName="title" maxlength="200" />
+        <mat-hint>{{ 'knowledge.titleFromFile' | transloco }}</mat-hint>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'knowledge.scope' | transloco }}</mat-label>
+        <mat-select formControlName="agentId">
+          <mat-option value="">{{ 'knowledge.allAgents' | transloco }}</mat-option>
+          @for (a of agents(); track a.id) {
+            <mat-option [value]="a.id">{{ a.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (progress() !== null) {
+      <div class="progress">
+        <mat-progress-bar [mode]="processing() ? 'indeterminate' : 'determinate'" [value]="progress() ?? 0" />
+        <small>{{ (processing() ? 'knowledge.processing' : 'knowledge.uploading') | transloco: { percent: progress() } }}</small>
+      </div>
+    }
+    @if (serverError(); as message) {
+      <div class="alert" role="alert">{{ message }}</div>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>{{ 'common.cancel' | transloco }}</button>
+    <button mat-flat-button type="submit" [disabled]="progress() !== null || !file()">
+      <mat-icon>upload</mat-icon>{{ 'knowledge.send' | transloco }}
+    </button>
+  </mat-dialog-actions>
+</form>

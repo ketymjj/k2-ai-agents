@@ -1,0 +1,186 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'learn.title' | transloco }}</h1>
+      <p>{{ 'learn.subtitle' | transloco }}</p>
+    </div>
+    @if (!learning.enabled()) {
+      <button mat-stroked-button type="button" (click)="learning.toggle()"><mat-icon>school</mat-icon>{{ 'learn.turnOn' | transloco }}</button>
+    }
+  </header>
+
+  <section class="card">
+    <mat-tab-group [selectedIndex]="selectedIndex()" (selectedIndexChange)="selectTab($event)" mat-stretch-tabs="false" animationDuration="0ms">
+      <!-- Tutorial -->
+      <mat-tab [label]="'learn.tabs.tutorial' | transloco">
+        <div class="tab">
+          <p class="lead">{{ 'learn.tutorial.intro' | transloco }}</p>
+          @if (loadingProgress()) {
+            <mat-progress-bar mode="indeterminate" />
+          } @else {
+            <p class="muted">{{ 'learn.tutorial.progress' | transloco: { done: completed(), total: trackable() } }}</p>
+          }
+          @if (!isManager()) {
+            <p class="note">{{ 'learn.tutorial.roleNote' | transloco }}</p>
+          }
+          <ol class="steps">
+            @for (s of steps(); track s.key; let i = $index) {
+              <li class="step" [class.step--done]="s.done">
+                <span class="step__marker" aria-hidden="true">
+                  @if (s.done) {
+                    <mat-icon>check</mat-icon>
+                  } @else {
+                    {{ i + 1 }}
+                  }
+                </span>
+                <div class="step__body">
+                  <strong>{{ 'learn.tutorial.steps.' + s.key + '.title' | transloco }}</strong>
+                  <p>{{ 'learn.tutorial.steps.' + s.key + '.text' | transloco }}</p>
+                  @if (s.done) {
+                    <span class="sr-only">{{ 'learn.tutorial.done' | transloco }}</span>
+                  }
+                </div>
+                @if (canDo(s)) {
+                  <a mat-stroked-button [routerLink]="s.link"><mat-icon>{{ s.icon }}</mat-icon>{{ 'learn.tutorial.steps.' + s.key + '.action' | transloco }}</a>
+                }
+              </li>
+            }
+          </ol>
+        </div>
+      </mat-tab>
+
+      <!-- Glossário -->
+      <mat-tab [label]="'learn.tabs.glossary' | transloco">
+        <div class="tab">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search">
+            <mat-icon matPrefix>search</mat-icon>
+            <mat-label>{{ 'learn.glossarySearch' | transloco }}</mat-label>
+            <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" />
+          </mat-form-field>
+          <dl class="glossary">
+            @for (g of glossary(); track g.key) {
+              <div class="glossary__item">
+                <dt>{{ g.term }}</dt>
+                <dd>
+                  {{ g.definition }}
+                  <small><strong>{{ 'learn.example' | transloco }}:</strong> {{ g.example }}</small>
+                </dd>
+              </div>
+            } @empty {
+              <p class="muted">{{ 'learn.glossaryEmpty' | transloco }}</p>
+            }
+          </dl>
+        </div>
+      </mat-tab>
+
+      <!-- Exemplos de prompts -->
+      <mat-tab [label]="'learn.tabs.prompts' | transloco">
+        <div class="tab">
+          <p class="lead">{{ 'learn.prompts.intro' | transloco }}</p>
+          <div class="tips">
+            <div class="tip tip--good">
+              <strong><mat-icon>thumb_up</mat-icon>{{ 'learn.prompts.goodTitle' | transloco }}</strong>
+              <p>{{ 'learn.prompts.good' | transloco }}</p>
+            </div>
+            <div class="tip tip--bad">
+              <strong><mat-icon>thumb_down</mat-icon>{{ 'learn.prompts.badTitle' | transloco }}</strong>
+              <p>{{ 'learn.prompts.bad' | transloco }}</p>
+            </div>
+          </div>
+          <div class="examples">
+            @for (t of businessTypes; track t) {
+              <article class="example">
+                <header>
+                  <h3>{{ 'businessTypes.' + t | transloco }}</h3>
+                  <button mat-icon-button type="button" (click)="copy(promptExample(t))" [attr.aria-label]="'learn.copy' | transloco"><mat-icon>content_copy</mat-icon></button>
+                </header>
+                <pre>{{ promptExample(t) }}</pre>
+                @if (isManager()) {
+                  <a mat-button [routerLink]="['/agents/new']" [queryParams]="{ type: t }"><mat-icon>add</mat-icon>{{ 'learn.prompts.createWith' | transloco }}</a>
+                }
+              </article>
+            }
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Conversa de demonstração -->
+      <mat-tab [label]="'learn.tabs.demo' | transloco">
+        <div class="tab">
+          <p class="lead">{{ 'learn.demo.intro' | transloco }}</p>
+          <p class="note"><mat-icon>info</mat-icon>{{ 'learn.demo.disclaimer' | transloco }}</p>
+          <ol class="chat">
+            @for (m of demo(); track $index) {
+              <li class="chat__row chat__row--{{ m.from }}">
+                <div class="bubble">
+                  <span class="bubble__who">{{ 'learn.demo.from.' + m.from | transloco }}</span>
+                  {{ m.text }}
+                </div>
+                @if (m.note) {
+                  <p class="annotation"><mat-icon aria-hidden="true">lightbulb</mat-icon>{{ m.note }}</p>
+                }
+              </li>
+            }
+          </ol>
+          @if (isManager()) {
+            <a mat-flat-button routerLink="/playground"><mat-icon>science</mat-icon>{{ 'learn.demo.tryIt' | transloco }}</a>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- Tokens e custos -->
+      <mat-tab [label]="'learn.tabs.costs' | transloco">
+        <div class="tab">
+          <div class="explain">
+            @for (k of ['tokens', 'pricing', 'context', 'control']; track k) {
+              <section>
+                <h3>{{ 'learn.costs.' + k + '.title' | transloco }}</h3>
+                <p>{{ 'learn.costs.' + k + '.text' | transloco }}</p>
+              </section>
+            }
+          </div>
+
+          <h3 class="calc-title"><mat-icon>calculate</mat-icon>{{ 'learn.costs.calculator' | transloco }}</h3>
+          <div class="calc">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'agents.model' | transloco }}</mat-label>
+              <mat-select [ngModel]="modelId()" (ngModelChange)="modelId.set($event)">
+                @for (m of models(); track m.id) {
+                  <mat-option [value]="m.id">{{ m.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'learn.costs.conversations' | transloco }}</mat-label>
+              <input matInput type="number" min="0" max="1000000" [ngModel]="conversationsPerMonth()" (ngModelChange)="conversationsPerMonth.set(+$event || 0)" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'learn.costs.replies' | transloco }}</mat-label>
+              <input matInput type="number" min="1" max="100" [ngModel]="repliesPerConversation()" (ngModelChange)="repliesPerConversation.set(+$event || 1)" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'learn.costs.words' | transloco }}</mat-label>
+              <input matInput type="number" min="1" max="2000" [ngModel]="wordsPerReply()" (ngModelChange)="wordsPerReply.set(+$event || 1)" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'learn.costs.promptTokens' | transloco }}</mat-label>
+              <input matInput type="number" min="0" max="20000" [ngModel]="promptTokens()" (ngModelChange)="promptTokens.set(+$event || 0)" />
+            </mat-form-field>
+          </div>
+          @if (estimate(); as e) {
+            <div class="result" aria-live="polite">
+              <div><span>{{ 'learn.costs.perReply' | transloco }}</span><strong>{{ n(e.inputPerReply) }} + {{ n(e.outputPerReply) }}</strong><small>{{ 'learn.costs.inOut' | transloco }}</small></div>
+              <div><span>{{ 'learn.costs.monthTokens' | transloco }}</span><strong>{{ n(e.inputTokens + e.outputTokens) }}</strong><small>{{ 'learn.costs.monthReplies' | transloco: { replies: n(e.replies) } }}</small></div>
+              <div class="result__cost"><span>{{ 'learn.costs.monthCost' | transloco }}</span><strong>US$ {{ n(e.cost, 2) }}</strong>
+                @if (e.model) {
+                  <small>{{ 'learn.costs.prices' | transloco: { input: n(e.model.inputPricePer1M, 2), output: n(e.model.outputPricePer1M, 2) } }}</small>
+                }
+              </div>
+            </div>
+          }
+          <p class="muted">{{ 'learn.costs.disclaimer' | transloco }}</p>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </section>
+</div>

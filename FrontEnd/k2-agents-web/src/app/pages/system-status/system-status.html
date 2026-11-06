@@ -1,0 +1,48 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'system.title' | transloco }}</h1>
+      <p>{{ 'system.subtitle' | transloco }}</p>
+    </div>
+    <button mat-stroked-button type="button" (click)="refresh()" [disabled]="loading()">
+      <mat-icon>refresh</mat-icon>
+      {{ (loading() ? 'system.checking' : 'system.refresh') | transloco }}
+    </button>
+  </header>
+
+  @if (failed()) {
+    <div class="card status-card status-card--error">
+      <strong>{{ 'system.unavailable' | transloco }}</strong>
+      <p>{{ 'system.unreachable' | transloco }}</p>
+    </div>
+  }
+
+  @if (info(); as i) {
+    <div class="grid">
+      <div class="card status-card">
+        <span class="label">{{ 'system.api' | transloco }}</span>
+        <span class="value ok">{{ 'system.online' | transloco }}</span>
+        <small>v{{ i.version }} · {{ i.environment }}</small>
+      </div>
+      <div class="card status-card">
+        <span class="label">{{ 'system.database' | transloco }}</span>
+        <span class="value" [class.ok]="i.database.online" [class.fail]="!i.database.online">
+          {{ (i.database.online ? 'system.connected' : 'system.disconnected') | transloco }}
+        </span>
+        <small>{{ 'system.pendingMigrations' | transloco: { count: i.database.pendingMigrations } }}</small>
+      </div>
+      <div class="card status-card">
+        <span class="label">{{ 'system.ai' | transloco }}</span>
+        <span class="value" [class.ok]="i.aiProviderConfigured" [class.warn]="!i.aiProviderConfigured">
+          {{ (i.aiProviderConfigured ? 'system.configured' : 'system.notConfigured') | transloco }}
+        </span>
+        <small>{{ (i.aiProviderConfigured ? 'system.realCalls' : 'system.demoOnly') | transloco }}</small>
+      </div>
+      <div class="card status-card">
+        <span class="label">{{ 'system.serverTime' | transloco }}</span>
+        <span class="value">{{ i.serverTimeUtc | date: 'HH:mm:ss' }}</span>
+        <small>{{ i.serverTimeUtc | date: 'dd/MM/yyyy' }}</small>
+      </div>
+    </div>
+  }
+</div>

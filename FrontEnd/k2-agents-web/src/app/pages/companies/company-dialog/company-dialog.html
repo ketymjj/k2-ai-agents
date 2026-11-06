@@ -1,0 +1,66 @@
+<h2 mat-dialog-title>{{ (company ? 'companies.editTitle' : 'companies.newTitle') | transloco }}</h2>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    @if (serverError(); as message) {
+      <div class="alert" role="alert">{{ message }}</div>
+    }
+    <div class="form-grid">
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'companies.name' | transloco }}</mat-label>
+        <input matInput formControlName="name" maxlength="160" />
+        @if (form.controls.name.hasError('required')) {
+          <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'companies.document' | transloco }}</mat-label>
+        <input matInput formControlName="document" inputmode="numeric" />
+        @if (serverFieldErrors()['document']; as e) {
+          <mat-hint class="server-error">{{ e }}</mat-hint>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'companies.industry' | transloco }}</mat-label>
+        <input matInput formControlName="industry" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'companies.email' | transloco }}</mat-label>
+        <input matInput type="email" formControlName="email" />
+        @if (form.controls.email.hasError('email')) {
+          <mat-error>{{ 'errors.email' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'companies.phone' | transloco }}</mat-label>
+        <input matInput type="tel" formControlName="phone" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'companies.website' | transloco }}</mat-label>
+        <input matInput type="url" formControlName="website" placeholder="https://" />
+        @if (form.controls.website.hasError('url')) {
+          <mat-error>{{ 'errors.url' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'companies.retention' | transloco }} ({{ 'common.optional' | transloco }})</mat-label>
+        <input matInput type="number" min="1" max="3650" formControlName="conversationRetentionDays" />
+        <mat-hint>{{ 'companies.retentionHint' | transloco }}</mat-hint>
+        @if (form.controls.conversationRetentionDays.invalid) {
+          <mat-error>{{ 'errors.range' | transloco: { min: 1, max: 3650 } }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>{{ 'common.cancel' | transloco }}</button>
+    <button mat-flat-button type="submit" [disabled]="saving()">
+      {{ (saving() ? 'common.saving' : 'common.save') | transloco }}
+    </button>
+  </mat-dialog-actions>
+</form>

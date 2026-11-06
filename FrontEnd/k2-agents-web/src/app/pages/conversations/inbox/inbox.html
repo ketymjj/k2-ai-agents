@@ -1,0 +1,282 @@
+<div class="page inbox-page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'conversations.title' | transloco }}</h1>
+      <p>{{ 'conversations.subtitle' | transloco }}</p>
+    </div>
+    <span class="live" [class.live--on]="realtime.state() === 'connected'" [matTooltip]="'conversations.liveHint' | transloco">
+      <span class="dot"></span>
+      {{ 'conversations.live.' + realtime.state() | transloco }}
+    </span>
+  </header>
+
+  <app-module-guide module="conversations" learnTab="demo" />
+
+  <div class="inbox card" [class.inbox--detail]="selected()" [class.inbox--side]="selected() && showSide()">
+    <!-- Lista -->
+    <aside class="list">
+      <div class="list__tools">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-icon matPrefix>search</mat-icon>
+          <input matInput [formControl]="search" [placeholder]="'conversations.searchPlaceholder' | transloco" />
+        </mat-form-field>
+        <div class="chips" role="tablist">
+          @for (s of statusFilters; track s) {
+            <button type="button" role="tab" class="chip" [class.chip--active]="status() === s" (click)="setStatus(s)">
+              {{ (s === '' ? 'common.all' : s === 'mine' ? 'conversations.mine' : 'conversationStatus.' + s) | transloco }}
+            </button>
+          }
+        </div>
+      </div>
+      <div class="list__progress">
+        @if (loading()) {
+          <mat-progress-bar mode="indeterminate" />
+        }
+      </div>
+      <ul class="items">
+        @for (c of conversations(); track c.id) {
+          <li>
+            <button type="button" class="item" [class.item--active]="selected()?.id === c.id" [class.item--waiting]="c.status === 'WaitingHuman'" (click)="open(c.id)">
+              <span class="avatar" [attr.data-status]="c.status">{{ initials(c.displayName) }}</span>
+              <span class="item__body">
+                <span class="item__top">
+                  <strong>{{ c.displayName }}</strong>
+                  <small>{{ c.lastMessageAt | date: 'dd/MM HH:mm' }}</small>
+                </span>
+                <span class="item__preview">{{ c.lastMessagePreview ?? '—' }}</span>
+                <span class="item__meta">
+                  <span class="status status--{{ c.status }}">{{ 'conversationStatus.' + c.status | transloco }}</span>
+                  <span>{{ c.agentName }}</span>
+                  @if (c.assignedUserName) {
+                    <span>· {{ c.assignedUserName }}</span>
+                  }
+                  @if (auth.isSuperAdmin()) {
+                    <span>· {{ c.companyName }}</span>
+                  }
+                  @if (c.isDemo) {
+                    <span class="demo">{{ 'conversations.demo' | transloco }}</span>
+                  }
+                </span>
+              </span>
+            </button>
+          </li>
+        } @empty {
+          @if (!loading()) {
+            <li class="empty">{{ 'conversations.empty' | transloco }}</li>
+          }
+        }
+      </ul>
+    </aside>
+
+    <!-- Conversa -->
+    <section class="detail">
+      @if (selected(); as c) {
+        <header class="detail__header">
+          <button mat-icon-button type="button" class="back" (click)="back()" [attr.aria-label]="'common.back' | transloco">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <div class="detail__title">
+            <strong>{{ c.displayName }}</strong>
+            <small>
+              {{ 'conversations.via' | transloco: { channel: ('channelTypes.' + c.channel | transloco), agent: c.agentName } }}
+              @if (c.assignedUserName) {
+                · {{ 'conversations.assignedTo' | transloco: { name: c.assignedUserName } }}
+              }
+            </small>
+          </div>
+          <span class="status status--{{ c.status }}">{{ 'conversationStatus.' + c.status | transloco }}</span>
+          @if (canAttend()) {
+            <div class="actions">
+              @switch (c.status) {
+                @case ('Open') {
+                  <button mat-stroked-button type="button" (click)="transfer()" [disabled]="acting()" [matTooltip]="'conversations.transferHint' | transloco">
+                    <mat-icon>support_agent</mat-icon>{{ 'conversations.transfer' | transloco }}
+                  </button>
+                }
+                @case ('WaitingHuman') {
+                  <button mat-flat-button type="button" (click)="claim()" [disabled]="acting()">
+                    <mat-icon>pan_tool</mat-icon>{{ 'conversations.claim' | transloco }}
+                  </button>
+                  <button mat-stroked-button type="button" (click)="returnToAi()" [disabled]="acting()">
+                    <mat-icon>smart_toy</mat-icon>{{ 'conversations.returnToAi' | transloco }}
+                  </button>
+                }
+                @case ('HumanActive') {
+                  @if (!isMine()) {
+                    <button mat-stroked-button type="button" (click)="claim()" [disabled]="acting()">
+                      <mat-icon>pan_tool</mat-icon>{{ 'conversations.takeOver' | transloco }}
+                    </button>
+                  }
+                  <button mat-stroked-button type="button" (click)="returnToAi()" [disabled]="acting()">
+                    <mat-icon>smart_toy</mat-icon>{{ 'conversations.returnToAi' | transloco }}
+                  </button>
+                }
+              }
+              @if (c.status === 'Closed') {
+                <button mat-stroked-button type="button" (click)="reopen()" [disabled]="acting()">
+                  <mat-icon>restart_alt</mat-icon>{{ 'conversations.reopen' | transloco }}
+                </button>
+              } @else {
+                <button mat-stroked-button type="button" (click)="close()" [disabled]="acting()">
+                  <mat-icon>check_circle</mat-icon>{{ 'conversations.close' | transloco }}
+                </button>
+              }
+            </div>
+          }
+          <button mat-icon-button type="button" class="side-toggle" (click)="showSide.set(!showSide())" [matTooltip]="'conversations.details' | transloco">
+            <mat-icon>{{ showSide() ? 'right_panel_close' : 'right_panel_open' }}</mat-icon>
+          </button>
+        </header>
+        @if (c.isDemo) {
+          <div class="demo-banner"><mat-icon>science</mat-icon>{{ 'conversations.demoBanner' | transloco }}</div>
+        }
+        @if (c.status === 'WaitingHuman') {
+          <div class="waiting-banner"><mat-icon>notifications_active</mat-icon>{{ 'conversations.waitingBanner' | transloco }}</div>
+        }
+
+        <div class="messages" #scroller>
+          @if (loadingDetail()) {
+            <mat-progress-bar mode="indeterminate" />
+          }
+          @for (m of messages(); track m.id) {
+            @if (m.senderType === 'System') {
+              <div class="system">{{ m.content }}</div>
+            } @else {
+              <div class="msg" [class.msg--contact]="m.senderType === 'Contact'" [class.msg--team]="m.senderType !== 'Contact'" [class.msg--human]="m.senderType === 'Human'">
+                <div class="bubble" [class.bubble--simulated]="m.isSimulated">
+                  <span class="text">{{ m.content }}</span>
+                </div>
+                <div class="meta">
+                  <span class="sender sender--{{ m.senderType }}">{{ 'conversations.sender.' + m.senderType | transloco }}</span>
+                  @if (m.isSimulated) {
+                    <span class="sim">{{ 'playground.simulatedBadge' | transloco }}</span>
+                  }
+                  · {{ m.createdAt | date: 'dd/MM HH:mm' }}
+                  @if (m.inputTokens || m.outputTokens) {
+                    · {{ m.inputTokens + m.outputTokens }} tokens
+                  }
+                  @if (m.sources.length) {
+                    · <mat-icon class="src-icon">menu_book</mat-icon>
+                    @for (s of m.sources; track s.documentId; let last = $last) {
+                      {{ s.title }}{{ last ? '' : ', ' }}
+                    }
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+
+        @if (canAttend() && c.status !== 'Closed') {
+          <form class="composer" (ngSubmit)="send()">
+            <textarea
+              rows="1"
+              name="reply"
+              maxlength="4000"
+              [ngModel]="draft()"
+              (ngModelChange)="draft.set($event)"
+              (keydown)="onKeydown($event)"
+              [placeholder]="'conversations.replyPlaceholder' | transloco"
+              [attr.aria-label]="'conversations.replyPlaceholder' | transloco"
+            ></textarea>
+            <button mat-flat-button type="submit" class="send" [disabled]="sending() || !draft().trim()" [attr.aria-label]="'playground.send' | transloco">
+              <mat-icon>send</mat-icon>
+            </button>
+          </form>
+          <p class="composer__hint">
+            <mat-icon>info</mat-icon>
+            {{ (c.status === 'HumanActive' && isMine() ? 'conversations.replyHintActive' : 'conversations.replyHintClaim') | transloco }}
+          </p>
+        } @else {
+          <footer class="detail__footer">
+            <mat-icon>info</mat-icon>
+            <span>{{ (c.status === 'Closed' ? 'conversations.closedHint' : 'conversations.aiHandling') | transloco }}</span>
+          </footer>
+        }
+      } @else {
+        <div class="placeholder">
+          <mat-icon>forum</mat-icon>
+          <p>{{ 'conversations.selectHint' | transloco }}</p>
+        </div>
+      }
+    </section>
+
+    <!-- Painel lateral: contato e histórico -->
+    @if (selected() && showSide()) {
+      <aside class="side">
+        <section class="side__block">
+          <h3>{{ 'conversations.customer' | transloco }}</h3>
+          @if (contact(); as ct) {
+            <div class="contact">
+              <a class="contact__name" [routerLink]="['/contacts', ct.id]">{{ ct.name }}</a>
+              <div class="contact__tags">
+                <span class="badge badge--primary">{{ 'contactStatus.' + ct.status | transloco }}</span>
+                @if (ct.isLead) {
+                  <span class="badge badge--success">Lead</span>
+                }
+              </div>
+              <dl>
+                <div><dt>{{ 'contacts.email' | transloco }}</dt><dd>{{ ct.email ?? '—' }}</dd></div>
+                <div><dt>{{ 'contacts.phone' | transloco }}</dt><dd>{{ formatPhone(ct.phone) }}</dd></div>
+                <div><dt>{{ 'contacts.interest' | transloco }}</dt><dd>{{ 'interest.' + ct.interest | transloco }}</dd></div>
+              </dl>
+            </div>
+          } @else if (canAttend()) {
+            <p class="muted">{{ 'conversations.noContact' | transloco }}</p>
+            <form class="identify" [formGroup]="identifyForm" (ngSubmit)="identify()" novalidate>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'contacts.name' | transloco }}</mat-label>
+                <input matInput formControlName="name" maxlength="120" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'contacts.email' | transloco }}</mat-label>
+                <input matInput type="email" formControlName="email" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'contacts.phone' | transloco }}</mat-label>
+                <input matInput type="tel" formControlName="phone" />
+              </mat-form-field>
+              @if (identifyError(); as e) {
+                <p class="error">{{ e }}</p>
+              }
+              <button mat-stroked-button type="submit" [disabled]="identifying()">
+                <mat-icon>person_add</mat-icon>{{ 'conversations.identify' | transloco }}
+              </button>
+            </form>
+          } @else {
+            <p class="muted">{{ 'conversations.noContact' | transloco }}</p>
+          }
+        </section>
+
+        <section class="side__block">
+          <h3>{{ 'conversations.history' | transloco }}</h3>
+          <ol class="timeline">
+            <li>
+              <span class="tl-dot"></span>
+              <div>
+                <strong>{{ 'conversations.events.started' | transloco }}</strong>
+                <small>{{ selected()!.startedAt | date: 'dd/MM HH:mm' }}</small>
+              </div>
+            </li>
+            @for (e of events(); track $index) {
+              <li>
+                <span class="tl-dot tl-dot--{{ e.action.split('.')[1] }}"></span>
+                <div>
+                  <strong>{{ 'conversations.events.' + e.action.split('.')[1] | transloco }}</strong>
+                  <small>
+                    {{ e.createdAt | date: 'dd/MM HH:mm' }}
+                    @if (e.userName) {
+                      · {{ e.userName }}
+                    } @else if (e.details) {
+                      · {{ e.details }}
+                    }
+                  </small>
+                </div>
+              </li>
+            }
+          </ol>
+        </section>
+      </aside>
+    }
+  </div>
+</div>

@@ -1,0 +1,68 @@
+<div class="login">
+  <section class="hero">
+    <div class="hero__brand">
+      <span class="logo">K2</span>
+      <strong>{{ 'app.name' | transloco }}</strong>
+    </div>
+    <div class="hero__copy">
+      <h2>{{ 'login.heroTitle' | transloco }}</h2>
+      <p>{{ 'login.heroText' | transloco }}</p>
+    </div>
+    <small class="hero__footer">K2 Digital</small>
+  </section>
+
+  <section class="panel">
+    <div class="panel__tools">
+      <button mat-icon-button type="button" [matMenuTriggerFor]="langMenu" [attr.aria-label]="'header.language' | transloco">
+        <mat-icon>translate</mat-icon>
+      </button>
+      <mat-menu #langMenu="matMenu">
+        @for (lang of languages; track lang) {
+          <button mat-menu-item type="button" (click)="language.use(lang)">{{ 'languages.' + lang | transloco }}</button>
+        }
+      </mat-menu>
+      <button mat-icon-button type="button" (click)="theme.toggle()"
+        [attr.aria-label]="(theme.theme() === 'dark' ? 'header.lightTheme' : 'header.darkTheme') | transloco">
+        <mat-icon>{{ theme.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+    </div>
+
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <h1>{{ 'login.title' | transloco }}</h1>
+      <p class="subtitle">{{ 'login.subtitle' | transloco }}</p>
+
+      @if (expired() && !error()) {
+        <div class="alert alert--info">{{ 'login.expired' | transloco }}</div>
+      }
+      @if (error(); as message) {
+        <div class="alert alert--error" role="alert">{{ message }}</div>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'login.email' | transloco }}</mat-label>
+        <input matInput type="email" formControlName="email" autocomplete="username" />
+        @if (form.controls.email.hasError('required')) {
+          <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+        } @else if (form.controls.email.hasError('email')) {
+          <mat-error>{{ 'errors.email' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'login.password' | transloco }}</mat-label>
+        <input matInput [type]="showPassword() ? 'text' : 'password'" formControlName="password" autocomplete="current-password" />
+        <button mat-icon-button matSuffix type="button" (click)="showPassword.set(!showPassword())"
+          [attr.aria-label]="(showPassword() ? 'login.hidePassword' : 'login.showPassword') | transloco">
+          <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (form.controls.password.hasError('required')) {
+          <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+
+      <button mat-flat-button class="submit" type="submit" [disabled]="submitting()">
+        {{ (submitting() ? 'login.submitting' : 'login.submit') | transloco }}
+      </button>
+    </form>
+  </section>
+</div>

@@ -1,0 +1,107 @@
+<div class="shell" [class.shell--collapsed]="collapsed() && !isMobile()" [class.shell--mobile]="isMobile()">
+  <aside class="sidebar" [class.sidebar--open]="mobileOpen()">
+    <div class="sidebar__brand">
+      <span class="logo">K2</span>
+      <div class="brand-text">
+        <strong>{{ 'app.name' | transloco }}</strong>
+        <small>{{ 'app.tagline' | transloco }}</small>
+      </div>
+    </div>
+
+    <nav class="sidebar__nav">
+      @for (item of navItems(); track item.labelKey) {
+        <a
+          class="nav-link"
+          [routerLink]="item.link"
+          routerLinkActive="nav-link--active"
+          [matTooltip]="collapsed() && !isMobile() ? (item.labelKey | transloco) : ''"
+          matTooltipPosition="right"
+        >
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span class="nav-label">{{ item.labelKey | transloco }}</span>
+        </a>
+      }
+    </nav>
+
+    @if (!isMobile()) {
+      <button type="button" class="sidebar__toggle" (click)="toggleSidebar()">
+        <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+        <span class="nav-label">{{ (collapsed() ? 'nav.expand' : 'nav.collapse') | transloco }}</span>
+      </button>
+    }
+  </aside>
+
+  @if (isMobile() && mobileOpen()) {
+    <div class="backdrop" (click)="mobileOpen.set(false)"></div>
+  }
+
+  <div class="main">
+    <header class="header">
+      @if (isMobile()) {
+        <button mat-icon-button type="button" (click)="toggleSidebar()" [attr.aria-label]="'header.openMenu' | transloco">
+          <mat-icon>menu</mat-icon>
+        </button>
+      }
+      <div class="header__context">
+        @if (auth.user()?.companyName; as companyName) {
+          <span class="company">{{ companyName }}</span>
+        } @else {
+          <span class="company">{{ 'users.platform' | transloco }}</span>
+        }
+      </div>
+
+      <div class="header__actions">
+        <button type="button" class="beginner-toggle" [class.beginner-toggle--on]="learning.enabled()" (click)="learning.toggle()"
+          [attr.aria-pressed]="learning.enabled()" [matTooltip]="(learning.enabled() ? 'learn.turnOff' : 'learn.turnOn') | transloco">
+          <mat-icon aria-hidden="true">school</mat-icon>
+          <span class="beginner-toggle__label">{{ 'learn.toggle' | transloco }}</span>
+        </button>
+        <app-notification-bell />
+        <button mat-icon-button type="button" [matMenuTriggerFor]="langMenu" [matTooltip]="'header.language' | transloco">
+          <mat-icon>translate</mat-icon>
+        </button>
+        <mat-menu #langMenu="matMenu">
+          @for (lang of languages; track lang) {
+            <button mat-menu-item type="button" (click)="setLanguage(lang)">
+              <mat-icon>{{ language.current() === lang ? 'radio_button_checked' : 'radio_button_unchecked' }}</mat-icon>
+              {{ 'languages.' + lang | transloco }}
+            </button>
+          }
+        </mat-menu>
+
+        <button
+          mat-icon-button
+          type="button"
+          (click)="theme.toggle()"
+          [matTooltip]="(theme.theme() === 'dark' ? 'header.lightTheme' : 'header.darkTheme') | transloco"
+        >
+          <mat-icon>{{ theme.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+        </button>
+
+        <button type="button" class="user-button" [matMenuTriggerFor]="userMenu">
+          <span class="avatar">{{ initials() }}</span>
+          <span class="user-info">
+            <strong>{{ auth.user()?.name }}</strong>
+            <small>{{ 'roles.' + auth.user()?.role | transloco }}</small>
+          </span>
+          <mat-icon>expand_more</mat-icon>
+        </button>
+        <mat-menu #userMenu="matMenu" xPosition="before">
+          <div class="menu-email">{{ auth.user()?.email }}</div>
+          <button mat-menu-item type="button" (click)="openChangePassword()">
+            <mat-icon>lock_reset</mat-icon>
+            {{ 'header.changePassword' | transloco }}
+          </button>
+          <button mat-menu-item type="button" (click)="auth.logout()">
+            <mat-icon>logout</mat-icon>
+            {{ 'header.logout' | transloco }}
+          </button>
+        </mat-menu>
+      </div>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

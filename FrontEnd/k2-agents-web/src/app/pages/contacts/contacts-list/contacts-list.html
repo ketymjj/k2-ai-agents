@@ -1,0 +1,117 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'contacts.title' | transloco }}</h1>
+      <p>{{ 'contacts.subtitle' | transloco }}</p>
+    </div>
+    @if (canEdit()) {
+      <button mat-flat-button type="button" (click)="create()"><mat-icon>person_add</mat-icon>{{ 'contacts.new' | transloco }}</button>
+    }
+  </header>
+
+  <app-module-guide module="contacts" />
+
+  <section class="card funnel" [attr.aria-label]="'contacts.funnel' | transloco">
+    <header>
+      <h2>{{ 'contacts.funnel' | transloco }}</h2>
+      @if (funnel(); as f) {
+        <span class="muted">{{ 'contacts.funnelTotals' | transloco: { total: f.total, leads: f.leads } }}</span>
+      }
+    </header>
+    <div class="stages">
+      @for (s of stages(); track s.status) {
+        <button type="button" class="stage stage--{{ s.status }}" [class.stage--active]="stage() === s.status" (click)="setStage(s.status)">
+          <span class="stage__count">{{ funnel() ? s.count : '—' }}</span>
+          <span class="stage__label">{{ 'contactStatus.' + s.status | transloco }}</span>
+          <span class="stage__bar"><span [style.width.%]="(s.count / maxStage()) * 100"></span></span>
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="toolbar">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="grow">
+        <mat-label>{{ 'common.search' | transloco }}</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [formControl]="search" [placeholder]="'contacts.searchPlaceholder' | transloco" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'contacts.type' | transloco }}</mat-label>
+        <mat-select [formControl]="leadsOnly">
+          <mat-option value="">{{ 'common.all' | transloco }}</mat-option>
+          <mat-option value="true">{{ 'contacts.leadsOnly' | transloco }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'contacts.interest' | transloco }}</mat-label>
+        <mat-select [formControl]="interest">
+          <mat-option value="">{{ 'common.all' | transloco }}</mat-option>
+          @for (i of interests; track i) {
+            <mat-option [value]="i">{{ 'interest.' + i | transloco }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="progress">
+      @if (loading()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+    </div>
+
+    @if (!loading() && contacts().length === 0) {
+      <div class="empty-state">{{ 'contacts.empty' | transloco }}</div>
+    } @else {
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>{{ 'contacts.name' | transloco }}</th>
+              <th>{{ 'contacts.contactInfo' | transloco }}</th>
+              <th>{{ 'contacts.stage' | transloco }}</th>
+              <th>{{ 'contacts.interest' | transloco }}</th>
+              @if (auth.isSuperAdmin()) {
+                <th>{{ 'users.company' | transloco }}</th>
+              }
+              <th>{{ 'contacts.conversations' | transloco }}</th>
+              <th>{{ 'contacts.lastContact' | transloco }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of contacts(); track c.id) {
+              <tr [class.anon]="c.isAnonymized">
+                <td>
+                  <a class="primary-cell link" [routerLink]="['/contacts', c.id]">
+                    <strong>
+                      {{ c.name }}
+                      @if (c.isLead) {
+                        <span class="badge badge--success">Lead</span>
+                      }
+                    </strong>
+                    <small>{{ c.source ?? '—' }}</small>
+                  </a>
+                </td>
+                <td>
+                  <span class="primary-cell">
+                    <span>{{ c.email ?? '—' }}</span>
+                    <small>{{ formatPhone(c.phone) }}</small>
+                  </span>
+                </td>
+                <td><span class="badge stage-badge stage-badge--{{ c.status }}">{{ 'contactStatus.' + c.status | transloco }}</span></td>
+                <td>{{ 'interest.' + c.interest | transloco }}</td>
+                @if (auth.isSuperAdmin()) {
+                  <td>{{ c.companyName }}</td>
+                }
+                <td>{{ c.conversationCount }}</td>
+                <td>{{ c.lastConversationAt ? (c.lastConversationAt | date: 'dd/MM/yyyy') : '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (total() > pageSize()) {
+        <mat-paginator [length]="total()" [pageIndex]="page()" [pageSize]="pageSize()" [pageSizeOptions]="[10, 20, 50]" (page)="onPage($event)" />
+      }
+    }
+  </section>
+</div>

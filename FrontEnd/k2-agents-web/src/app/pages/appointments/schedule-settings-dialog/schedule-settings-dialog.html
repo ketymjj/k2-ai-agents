@@ -1,0 +1,87 @@
+<h2 mat-dialog-title>{{ 'appointments.settingsTitle' | transloco }}</h2>
+<mat-dialog-content>
+  @if (error(); as e) {
+    <div class="alert" role="alert">{{ e }}</div>
+  }
+  <p class="intro">{{ 'appointments.settingsIntro' | transloco }}</p>
+
+  <h3>{{ 'appointments.services' | transloco }}</h3>
+  <div class="services">
+    @for (sv of services.controls; track sv; let i = $index) {
+      <div class="service" [formGroup]="sv">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'appointments.service' | transloco }}</mat-label>
+          <input matInput formControlName="name" maxlength="120" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="duration">
+          <mat-label>{{ 'appointments.duration' | transloco }}</mat-label>
+          <input matInput type="number" min="5" max="480" formControlName="durationMinutes" />
+          <span matTextSuffix>min</span>
+        </mat-form-field>
+        <button mat-icon-button type="button" (click)="removeService(i)" [disabled]="services.length === 1" [attr.aria-label]="'agents.remove' | transloco">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    }
+  </div>
+  <button mat-stroked-button type="button" (click)="addService()" [disabled]="services.length >= 50"><mat-icon>add</mat-icon>{{ 'appointments.addService' | transloco }}</button>
+
+  <h3>{{ 'appointments.weeklyHours' | transloco }}</h3>
+  <div class="week">
+    @for (d of week.controls; track $index; let i = $index) {
+      <div class="day" [formGroup]="d" [class.day--closed]="!d.controls.open.value">
+        <mat-checkbox formControlName="open">{{ 'days.' + days[i] | transloco }}</mat-checkbox>
+        @if (d.controls.open.value) {
+          <div class="ranges">
+            <input type="time" formControlName="start1" [attr.aria-label]="'appointments.opens' | transloco" />
+            <span>–</span>
+            <input type="time" formControlName="end1" [attr.aria-label]="'appointments.closes' | transloco" />
+            @if (d.controls.split.value) {
+              <span class="sep">·</span>
+              <input type="time" formControlName="start2" [attr.aria-label]="'appointments.opens' | transloco" />
+              <span>–</span>
+              <input type="time" formControlName="end2" [attr.aria-label]="'appointments.closes' | transloco" />
+            }
+            <mat-checkbox formControlName="split" class="split">{{ 'appointments.lunchBreak' | transloco }}</mat-checkbox>
+          </div>
+        } @else {
+          <span class="closed">{{ 'appointments.closed' | transloco }}</span>
+        }
+      </div>
+    }
+  </div>
+
+  <h3>{{ 'appointments.rules' | transloco }}</h3>
+  <div class="rules" [formGroup]="general">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'appointments.slotInterval' | transloco }}</mat-label>
+      <mat-select formControlName="slotMinutes">
+        @for (m of slotOptions; track m) {
+          <mat-option [value]="m">{{ m }} min</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'appointments.minAdvance' | transloco }}</mat-label>
+      <input matInput type="number" min="0" step="0.5" formControlName="minAdvanceHours" />
+      <span matTextSuffix>h</span>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'appointments.maxDaysAhead' | transloco }}</mat-label>
+      <input matInput type="number" min="1" max="365" formControlName="maxDaysAhead" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'appointments.timeZone' | transloco }}</mat-label>
+      <mat-select formControlName="timeZone">
+        @for (tz of timeZones; track tz) {
+          <mat-option [value]="tz">{{ tz }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <p class="hint"><mat-icon>smart_toy</mat-icon>{{ 'appointments.agentHint' | transloco }}</p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>{{ 'common.cancel' | transloco }}</button>
+  <button mat-flat-button type="button" (click)="save()" [disabled]="saving()">{{ (saving() ? 'common.saving' : 'common.save') | transloco }}</button>
+</mat-dialog-actions>

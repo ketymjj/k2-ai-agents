@@ -1,0 +1,10 @@
+<h2 mat-dialog-title>{{ data.title }}</h2>
+<mat-dialog-content>
+  <p class="message">{{ data.message }}</p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" [mat-dialog-close]="false">{{ 'common.cancel' | transloco }}</button>
+  <button mat-flat-button type="button" [class.danger]="data.danger" [mat-dialog-close]="true">
+    {{ data.confirmLabel ?? ('common.confirm' | transloco) }}
+  </button>
+</mat-dialog-actions>

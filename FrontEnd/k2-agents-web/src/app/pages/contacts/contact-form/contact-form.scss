@@ -1,0 +1,16 @@
+.form-grid .mat-mdc-form-field {
+  margin-bottom: 8px;
+}
+
+.lead-box {
+  display: flex;
+  align-items: center;
+}
+
+.alert {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--k2-red);
+}

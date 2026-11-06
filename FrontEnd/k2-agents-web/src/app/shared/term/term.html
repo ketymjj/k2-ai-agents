@@ -1,0 +1,1 @@
+<span [class.term]="active()" [matTooltip]="definition()" matTooltipClass="term-tooltip" [attr.tabindex]="active() ? 0 : null"><ng-content />@if (active()) {<mat-icon class="term__icon" aria-hidden="true">help_outline</mat-icon><span class="sr-only">: {{ definition() }}</span>}</span>

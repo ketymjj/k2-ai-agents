@@ -1,0 +1,52 @@
+<h2 mat-dialog-title>{{ 'agents.versionsTitle' | transloco: { name: data.agent.name } }}</h2>
+<mat-dialog-content>
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  } @else {
+    <div class="layout">
+      <ol class="timeline">
+        @for (v of versions(); track v.id) {
+          <li>
+            <button type="button" class="version" [class.version--selected]="selected()?.id === v.id" (click)="selected.set(v)">
+              <span class="version__number">
+                v{{ v.versionNumber }}
+                @if (v.isCurrent) {
+                  <span class="badge badge--success">{{ 'agents.current' | transloco }}</span>
+                }
+              </span>
+              <span class="version__note">{{ v.changeNote || ('agents.noChangeNote' | transloco) }}</span>
+              <small>{{ v.createdAt | date: 'dd/MM/yyyy HH:mm' }} · {{ v.createdByName ?? ('agents.system' | transloco) }}</small>
+            </button>
+          </li>
+        }
+      </ol>
+
+      @if (selected(); as v) {
+        <section class="detail">
+          <dl class="meta">
+            <div><dt>{{ 'agents.model' | transloco }}</dt><dd>{{ v.model }}</dd></div>
+            <div><dt>{{ 'agents.temperature' | transloco }}</dt><dd>{{ v.temperature }}</dd></div>
+            <div><dt>{{ 'agents.maxTokens' | transloco }}</dt><dd>{{ v.maxOutputTokens }}</dd></div>
+          </dl>
+          @if (v.welcomeMessage) {
+            <h3>{{ 'agents.welcomeMessage' | transloco }}</h3>
+            <p class="welcome">{{ v.welcomeMessage }}</p>
+          }
+          <h3>{{ 'agents.systemPrompt' | transloco }}</h3>
+          <pre class="prompt">{{ v.systemPrompt }}</pre>
+        </section>
+      }
+    </div>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>{{ 'common.close' | transloco }}</button>
+  @if (data.canRestore && selected(); as v) {
+    @if (!v.isCurrent) {
+      <button mat-flat-button type="button" (click)="restore(v)" [disabled]="restoring()">
+        <mat-icon>restore</mat-icon>
+        {{ 'agents.restoreVersion' | transloco: { version: v.versionNumber } }}
+      </button>
+    }
+  }
+</mat-dialog-actions>

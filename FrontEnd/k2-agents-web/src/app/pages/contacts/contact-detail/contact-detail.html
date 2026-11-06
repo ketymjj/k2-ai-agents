@@ -1,0 +1,81 @@
+<div class="page">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  } @else if (contact(); as c) {
+    <header class="page-header">
+      <div class="title">
+        <a mat-icon-button routerLink="/contacts" [attr.aria-label]="'common.back' | transloco"><mat-icon>arrow_back</mat-icon></a>
+        <div>
+          <h1>
+            {{ c.name }}
+            @if (c.isLead) {
+              <span class="badge badge--success">Lead</span>
+            }
+            @if (c.isAnonymized) {
+              <span class="badge">{{ 'contacts.anonymizedBadge' | transloco }}</span>
+            }
+          </h1>
+          <p>{{ 'contacts.since' | transloco }} {{ c.createdAt | date: 'dd/MM/yyyy' }} · {{ c.source ?? '—' }}</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        @if (canEdit()) {
+          <button mat-flat-button type="button" (click)="edit()"><mat-icon>edit</mat-icon>{{ 'common.edit' | transloco }}</button>
+        }
+        @if (canAnonymize()) {
+          <button mat-stroked-button type="button" class="danger" (click)="anonymize()"><mat-icon>person_off</mat-icon>{{ 'contacts.anonymize' | transloco }}</button>
+        }
+      </div>
+    </header>
+
+    <section class="card pipeline">
+      <h2>{{ 'contacts.stage' | transloco }}</h2>
+      <ol class="steps">
+        @for (s of statuses; track s; let i = $index) {
+          <li>
+            <button type="button" class="step step--{{ s }}" [class.step--current]="c.status === s" [disabled]="!canEdit()" (click)="moveTo(s)">
+              <span class="step__index">{{ i + 1 }}</span>
+              {{ 'contactStatus.' + s | transloco }}
+            </button>
+          </li>
+        }
+      </ol>
+      @if (canEdit()) {
+        <small class="muted">{{ 'contacts.stageHint' | transloco }}</small>
+      }
+    </section>
+
+    <div class="columns">
+      <section class="card info">
+        <h2>{{ 'contacts.data' | transloco }}</h2>
+        <dl>
+          <div><dt>{{ 'contacts.email' | transloco }}</dt><dd>{{ c.email ?? '—' }}</dd></div>
+          <div><dt>{{ 'contacts.phone' | transloco }}</dt><dd>{{ formatPhone(c.phone) }}</dd></div>
+          <div><dt>{{ 'contacts.interest' | transloco }}</dt><dd>{{ 'interest.' + c.interest | transloco }}</dd></div>
+          <div><dt>{{ 'contacts.source' | transloco }}</dt><dd>{{ c.source ?? '—' }}</dd></div>
+          @if (auth.isSuperAdmin()) {
+            <div><dt>{{ 'users.company' | transloco }}</dt><dd>{{ c.companyName }}</dd></div>
+          }
+          <div class="wide"><dt>{{ 'contacts.notes' | transloco }}</dt><dd class="notes">{{ c.notes ?? '—' }}</dd></div>
+        </dl>
+        <p class="privacy"><mat-icon>shield</mat-icon>{{ 'contacts.privacyNote' | transloco }}</p>
+      </section>
+
+      <section class="card history">
+        <h2>{{ 'contacts.conversationHistory' | transloco }} ({{ conversations().length }})</h2>
+        @for (cv of conversations(); track cv.id) {
+          <a class="conv" [routerLink]="['/conversations']" [queryParams]="{ id: cv.id }">
+            <span class="conv__top">
+              <strong>{{ cv.agentName }} · {{ 'channelTypes.' + cv.channel | transloco }}</strong>
+              <small>{{ cv.startedAt | date: 'dd/MM/yyyy HH:mm' }}</small>
+            </span>
+            <span class="conv__preview">{{ cv.lastMessagePreview ?? '—' }}</span>
+            <span class="conv__meta">{{ 'conversationStatus.' + cv.status | transloco }} · {{ 'contacts.messagesCount' | transloco: { count: cv.messageCount } }}</span>
+          </a>
+        } @empty {
+          <p class="muted">{{ 'contacts.noConversations' | transloco }}</p>
+        }
+      </section>
+    </div>
+  }
+</div>

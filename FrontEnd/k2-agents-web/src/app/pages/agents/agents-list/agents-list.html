@@ -1,0 +1,145 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'agents.title' | transloco }}</h1>
+      <p>{{ 'agents.subtitle' | transloco }}</p>
+    </div>
+    @if (canManage()) {
+      <a mat-flat-button routerLink="/agents/new" [queryParams]="company.value ? { companyId: company.value } : {}">
+        <mat-icon>add</mat-icon>
+        {{ 'agents.new' | transloco }}
+      </a>
+    }
+  </header>
+
+  <app-module-guide module="agents" learnTab="prompts" />
+
+  <section class="card filters">
+    <div class="toolbar">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="grow">
+        <mat-label>{{ 'common.search' | transloco }}</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [formControl]="search" [placeholder]="'agents.searchPlaceholder' | transloco" />
+      </mat-form-field>
+      @if (auth.isSuperAdmin()) {
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'users.company' | transloco }}</mat-label>
+          <mat-select [formControl]="company">
+            <mat-option value="">{{ 'users.allCompanies' | transloco }}</mat-option>
+            @for (c of companies(); track c.id) {
+              <mat-option [value]="c.id">{{ c.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'agents.type' | transloco }}</mat-label>
+        <mat-select [formControl]="type">
+          <mat-option value="">{{ 'common.all' | transloco }}</mat-option>
+          @for (t of businessTypes; track t) {
+            <mat-option [value]="t">{{ 'businessTypes.' + t | transloco }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'common.status' | transloco }}</mat-label>
+        <mat-select [formControl]="status">
+          <mat-option value="">{{ 'common.all' | transloco }}</mat-option>
+          <mat-option value="Active">{{ 'agentStatus.Active' | transloco }}</mat-option>
+          <mat-option value="Draft">{{ 'agentStatus.Draft' | transloco }}</mat-option>
+          <mat-option value="Inactive">{{ 'agentStatus.Inactive' | transloco }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="progress">
+      @if (loading()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+    </div>
+  </section>
+
+  @if (!loading() && agents().length === 0) {
+    <div class="card empty-state">
+      <mat-icon class="empty-icon">smart_toy</mat-icon>
+      <p>{{ 'agents.empty' | transloco }}</p>
+      @if (canManage()) {
+        <a mat-stroked-button routerLink="/agents/new">{{ 'agents.createFirst' | transloco }}</a>
+      }
+    </div>
+  } @else {
+    <div class="grid">
+      @for (agent of agents(); track agent.id) {
+        <article class="card agent-card" [class.agent-card--inactive]="agent.status === 'Inactive'">
+          <header class="agent-card__header">
+            <span class="avatar">{{ agent.name.charAt(0).toUpperCase() }}</span>
+            <div class="agent-card__title">
+              <a [routerLink]="['/agents', agent.id]"><strong>{{ agent.name }}</strong></a>
+              @if (auth.isSuperAdmin()) {
+                <small>{{ agent.companyName }}</small>
+              }
+            </div>
+            <button mat-icon-button type="button" [matMenuTriggerFor]="menu" [attr.aria-label]="'common.actions' | transloco">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu" xPosition="before">
+              <a mat-menu-item [routerLink]="['/agents', agent.id]">
+                <mat-icon>{{ canManage() ? 'edit' : 'visibility' }}</mat-icon>
+                {{ (canManage() ? 'common.edit' : 'common.details') | transloco }}
+              </a>
+              <button mat-menu-item type="button" (click)="versions(agent)">
+                <mat-icon>history</mat-icon>{{ 'agents.versions' | transloco }}
+              </button>
+              @if (canManage()) {
+                @if (agent.status !== 'Inactive') {
+                  <a mat-menu-item routerLink="/playground" [queryParams]="{ agentId: agent.id }">
+                    <mat-icon>science</mat-icon>{{ 'agents.test' | transloco }}
+                  </a>
+                }
+                <button mat-menu-item type="button" (click)="duplicate(agent)">
+                  <mat-icon>content_copy</mat-icon>{{ 'agents.duplicate' | transloco }}
+                </button>
+                <button mat-menu-item type="button" (click)="toggleStatus(agent)">
+                  <mat-icon>{{ agent.status === 'Active' ? 'pause_circle' : 'play_circle' }}</mat-icon>
+                  {{ (agent.status === 'Active' ? 'common.deactivate' : 'common.activate') | transloco }}
+                </button>
+              }
+            </mat-menu>
+          </header>
+
+          <p class="agent-card__desc">{{ agent.description || ('agents.noDescription' | transloco) }}</p>
+
+          <div class="agent-card__tags">
+            <span class="badge badge--primary">
+              <mat-icon class="tag-icon">{{ icons[agent.businessType] }}</mat-icon>
+              {{ 'businessTypes.' + agent.businessType | transloco }}
+            </span>
+            <span
+              class="badge"
+              [class.badge--success]="agent.status === 'Active'"
+              [class.badge--warning]="agent.status === 'Draft'"
+              [class.badge--danger]="agent.status === 'Inactive'"
+            >
+              {{ 'agentStatus.' + agent.status | transloco }}
+            </span>
+          </div>
+
+          <footer class="agent-card__footer">
+            <span><mat-icon>memory</mat-icon>{{ agent.model }}</span>
+            <span><mat-icon>translate</mat-icon>{{ agent.responseLanguage }}</span>
+            <span>v{{ agent.currentVersion }} · {{ agent.updatedAt | date: 'dd/MM/yyyy' }}</span>
+          </footer>
+        </article>
+      }
+    </div>
+    @if (total() > pageSize()) {
+      <mat-paginator
+        class="card paginator"
+        [length]="total()"
+        [pageIndex]="page()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[12, 24, 48]"
+        (page)="onPage($event)"
+      />
+    }
+  }
+</div>

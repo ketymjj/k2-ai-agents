@@ -1,0 +1,178 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 16px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.channel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  min-width: 0;
+
+  &--inactive {
+    opacity: 0.7;
+  }
+
+  &--soon {
+    border-style: dashed;
+    box-shadow: none;
+  }
+}
+
+.channel__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  color: #fff;
+
+  &--wa {
+    background: var(--surface-2);
+    color: var(--text-muted);
+  }
+}
+
+.channel__title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+
+  small {
+    color: var(--text-muted);
+  }
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  margin: 0;
+
+  dt {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 500;
+    word-break: break-word;
+  }
+}
+
+.install {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.install__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.snippet {
+  display: block;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.install__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}
+
+.muted {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+// Webhook do WhatsApp: rótulo, valor copiável e botão.
+.kv {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+
+  span {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: minmax(0, 1fr) auto;
+
+    span {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.test-result {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--k2-red);
+  font-size: 13px;
+
+  &--ok {
+    background: var(--success-soft);
+    color: var(--k2-green);
+  }
+
+  mat-icon {
+    flex: none;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.danger-item {
+  color: var(--k2-red);
+}
+
+.empty-state .empty-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: var(--primary);
+}

@@ -1,0 +1,147 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'users.title' | transloco }}</h1>
+      <p>{{ 'users.subtitle' | transloco }}</p>
+    </div>
+    <button mat-flat-button type="button" (click)="openDialog()" [disabled]="roles().length === 0">
+      <mat-icon>person_add</mat-icon>
+      {{ 'users.new' | transloco }}
+    </button>
+  </header>
+
+  <app-module-guide module="users" />
+
+  <section class="card">
+    <div class="toolbar">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="grow">
+        <mat-label>{{ 'common.search' | transloco }}</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [formControl]="search" [placeholder]="'users.searchPlaceholder' | transloco" />
+      </mat-form-field>
+
+      @if (auth.isSuperAdmin()) {
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'users.company' | transloco }}</mat-label>
+          <mat-select [formControl]="company">
+            <mat-option value="">{{ 'users.allCompanies' | transloco }}</mat-option>
+            @for (c of companies(); track c.id) {
+              <mat-option [value]="c.id">{{ c.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'users.role' | transloco }}</mat-label>
+        <mat-select [formControl]="role">
+          <mat-option value="">{{ 'common.all' | transloco }}</mat-option>
+          @for (r of roles(); track r.id) {
+            <mat-option [value]="r.id">{{ 'roles.' + r.id | transloco }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'common.status' | transloco }}</mat-label>
+        <mat-select [formControl]="active">
+          <mat-option value="">{{ 'common.all' | transloco }}</mat-option>
+          <mat-option value="true">{{ 'common.active' | transloco }}</mat-option>
+          <mat-option value="false">{{ 'common.inactive' | transloco }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="progress">
+      @if (loading()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+    </div>
+
+    @if (!loading() && users().length === 0) {
+      <div class="empty-state">{{ 'users.empty' | transloco }}</div>
+    } @else {
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>{{ 'users.name' | transloco }}</th>
+              <th>{{ 'users.role' | transloco }}</th>
+              @if (auth.isSuperAdmin()) {
+                <th>{{ 'users.company' | transloco }}</th>
+              }
+              <th>{{ 'common.status' | transloco }}</th>
+              <th>{{ 'users.lastLogin' | transloco }}</th>
+              <th><span class="sr-only">{{ 'common.actions' | transloco }}</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users(); track user.id) {
+              <tr>
+                <td>
+                  <div class="primary-cell">
+                    <strong>
+                      {{ user.name }}
+                      @if (isSelf(user)) {
+                        <span class="badge badge--primary">{{ 'users.you' | transloco }}</span>
+                      }
+                    </strong>
+                    <small>{{ user.email }}</small>
+                  </div>
+                </td>
+                <td><span class="badge badge--primary">{{ 'roles.' + user.role | transloco }}</span></td>
+                @if (auth.isSuperAdmin()) {
+                  <td>{{ user.companyName ?? ('users.platform' | transloco) }}</td>
+                }
+                <td>
+                  <span class="badge" [class.badge--success]="user.isActive" [class.badge--danger]="!user.isActive">
+                    {{ (user.isActive ? 'common.active' : 'common.inactive') | transloco }}
+                  </span>
+                  @if (user.isLocked) {
+                    <span class="badge badge--warning">{{ 'users.locked' | transloco }}</span>
+                  }
+                </td>
+                <td>{{ user.lastLoginAt ? (user.lastLoginAt | date: 'dd/MM/yyyy HH:mm') : ('users.never' | transloco) }}</td>
+                <td class="actions">
+                  <button mat-icon-button type="button" [matMenuTriggerFor]="menu" [attr.aria-label]="'common.actions' | transloco">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu" xPosition="before">
+                    <button mat-menu-item type="button" (click)="openDialog(user)">
+                      <mat-icon>edit</mat-icon>{{ 'common.edit' | transloco }}
+                    </button>
+                    @if (!isSelf(user)) {
+                      <button mat-menu-item type="button" (click)="toggleActive(user)">
+                        <mat-icon>{{ user.isActive ? 'person_off' : 'person_check' }}</mat-icon>
+                        {{ (user.isActive ? 'common.deactivate' : 'common.activate') | transloco }}
+                      </button>
+                    }
+                  </mat-menu>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <mat-paginator
+        [length]="total()"
+        [pageIndex]="page()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPage($event)"
+      />
+    }
+  </section>
+
+  <section class="card permissions">
+    <h2>{{ 'users.permissionsTitle' | transloco }}</h2>
+    <ul>
+      @for (r of roles(); track r.id) {
+        <li>
+          <span class="badge badge--primary">{{ 'roles.' + r.id | transloco }}</span>
+          <span>{{ 'roleDescriptions.' + r.id | transloco }}</span>
+        </li>
+      }
+    </ul>
+  </section>
+</div>

@@ -1,0 +1,11 @@
+.alert {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--k2-red);
+}
+
+.form-grid .mat-mdc-form-field {
+  margin-bottom: 12px;
+}

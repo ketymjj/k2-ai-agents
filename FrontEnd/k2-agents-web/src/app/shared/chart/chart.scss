@@ -1,0 +1,6 @@
+:host {
+  display: block;
+  position: relative;
+  height: var(--chart-height, 260px);
+  min-width: 0;
+}

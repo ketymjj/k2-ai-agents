@@ -1,0 +1,297 @@
+/* K2 AI Agents — tokens globais de tema (claro/escuro) + Angular Material (M3). */
+@use '@angular/material' as mat;
+
+:root {
+  --k2-navy: #101828;
+  --k2-purple: #6941c6;
+  --k2-blue: #2e90fa;
+  --k2-green: #12b76a;
+  --k2-white: #ffffff;
+  --k2-gray: #f9fafb;
+  --k2-red: #f04438;
+  --k2-amber: #f79009;
+
+  --bg: var(--k2-gray);
+  --surface: var(--k2-white);
+  --surface-2: #f2f4f7;
+  --text: var(--k2-navy);
+  --text-muted: #667085;
+  --border: #eaecf0;
+  --primary: var(--k2-purple);
+  --primary-soft: #f4ebff;
+  --primary-contrast: var(--k2-white);
+  --success-soft: #ecfdf3;
+  --danger-soft: #fef3f2;
+  --warning-soft: #fffaeb;
+  --sidebar-bg: var(--k2-navy);
+  --sidebar-text: #d0d5dd;
+  --sidebar-active: rgba(255, 255, 255, 0.08);
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(16, 24, 40, 0.1), 0 1px 2px rgba(16, 24, 40, 0.06);
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  color-scheme: light;
+
+  @include mat.theme((
+    color: (primary: mat.$violet-palette, tertiary: mat.$azure-palette, theme-type: color-scheme),
+    typography: Inter,
+    density: -1
+  ));
+
+  // Sobrescreve a cor primária do Material com o roxo da marca.
+  --mat-sys-primary: var(--primary);
+  --mat-sys-on-primary: var(--primary-contrast);
+  --mat-sys-surface: var(--surface);
+  --mat-sys-surface-container: var(--surface);
+  --mat-sys-surface-container-high: var(--surface);
+  --mat-sys-surface-container-low: var(--surface);
+  --mat-sys-on-surface: var(--text);
+  --mat-sys-on-surface-variant: var(--text-muted);
+  --mat-sys-outline-variant: var(--border);
+}
+
+:root[data-theme='dark'] {
+  --bg: #0c111d;
+  --surface: #161b26;
+  --surface-2: #1f242f;
+  --text: #f5f5f6;
+  --text-muted: #94969c;
+  --border: #333741;
+  --primary: #9e77ed;
+  --primary-soft: rgba(158, 119, 237, 0.16);
+  --primary-contrast: #0c111d;
+  --success-soft: rgba(18, 183, 106, 0.15);
+  --danger-soft: rgba(240, 68, 56, 0.15);
+  --warning-soft: rgba(247, 144, 9, 0.15);
+  --sidebar-bg: #0c111d;
+  --sidebar-text: #cecfd2;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--primary);
+}
+
+/* ---------- Blocos reutilizáveis entre páginas ---------- */
+
+.page {
+  padding: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+
+  @media (max-width: 600px) {
+    padding: 16px;
+  }
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+  }
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 16px 16px 0;
+
+  .mat-mdc-form-field {
+    width: auto;
+    flex: 0 1 200px;
+    min-width: 160px;
+  }
+
+  .mat-mdc-form-field.grow {
+    flex: 1 1 260px;
+  }
+
+  @media (max-width: 600px) {
+    .mat-mdc-form-field,
+    .mat-mdc-form-field.grow {
+      flex: 1 1 100%;
+    }
+  }
+}
+
+.table-wrap {
+  position: relative;
+  overflow-x: auto;
+}
+
+/* Texto só para leitores de tela; o pai precisa ser posicionado para não vazar da página. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  th {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--surface-2);
+  }
+
+  tbody tr:hover {
+    background: var(--surface-2);
+  }
+
+  td.actions {
+    text-align: right;
+    width: 1%;
+  }
+
+  .primary-cell {
+    display: flex;
+    flex-direction: column;
+
+    strong {
+      font-weight: 600;
+    }
+
+    small {
+      color: var(--text-muted);
+    }
+  }
+}
+
+.empty-state {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface-2);
+  color: var(--text-muted);
+
+  &--success {
+    background: var(--success-soft);
+    color: var(--k2-green);
+  }
+
+  &--danger {
+    background: var(--danger-soft);
+    color: var(--k2-red);
+  }
+
+  &--warning {
+    background: var(--warning-soft);
+    color: var(--k2-amber);
+  }
+
+  &--primary {
+    background: var(--primary-soft);
+    color: var(--primary);
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 16px;
+
+  .full {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+/* Menu de notificações (renderizado em overlay, fora do componente). */
+.mat-mdc-menu-panel.notification-menu {
+  width: 380px;
+  max-width: calc(100vw - 24px);
+  max-height: 70vh;
+}
+
+.k2-snack--success {
+  --mat-snack-bar-container-color: var(--k2-green);
+  --mat-snack-bar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #fff;
+}
+
+.k2-snack--error {
+  --mat-snack-bar-container-color: var(--k2-red);
+  --mat-snack-bar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #fff;
+}

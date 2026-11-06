@@ -1,0 +1,88 @@
+<h2 mat-dialog-title>{{ (data.channel ? 'whatsapp.editTitle' : 'whatsapp.newTitle') | transloco }}</h2>
+<mat-dialog-content>
+  @if (error(); as e) {
+    <div class="alert" role="alert">{{ e }}</div>
+  }
+  <p class="intro"><mat-icon>verified</mat-icon>{{ 'whatsapp.intro' | transloco }}</p>
+
+  <form [formGroup]="form" class="form" (ngSubmit)="save()">
+    <h3>{{ 'whatsapp.sectionChannel' | transloco }}</h3>
+    <div class="grid">
+      @if (data.isSuperAdmin && !data.channel) {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'users.company' | transloco }}</mat-label>
+          <mat-select formControlName="companyId">
+            @for (c of data.companies; track c.id) {
+              <mat-option [value]="c.id">{{ c.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'channels.name' | transloco }}</mat-label>
+        <input matInput formControlName="name" maxlength="80" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'playground.agent' | transloco }}</mat-label>
+        <mat-select formControlName="agentId">
+          @for (a of agentsFor(form.controls.companyId.value); track a.id) {
+            <mat-option [value]="a.id">{{ a.name }}</mat-option>
+          }
+        </mat-select>
+        <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <h3>{{ 'whatsapp.sectionMeta' | transloco }}</h3>
+    <p class="hint">{{ 'whatsapp.metaHint' | transloco }}</p>
+    <div class="grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Phone Number ID</mat-label>
+        <input matInput formControlName="phoneNumberId" inputmode="numeric" autocomplete="off" />
+        <mat-hint>{{ 'whatsapp.phoneNumberIdHint' | transloco }}</mat-hint>
+        <mat-error>{{ serverErrors()['phoneNumberId'] || ('whatsapp.digitsOnly' | transloco) }}</mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>WhatsApp Business Account ID ({{ 'common.optional' | transloco }})</mat-label>
+        <input matInput formControlName="businessAccountId" inputmode="numeric" autocomplete="off" />
+        <mat-error>{{ 'whatsapp.digitsOnly' | transloco }}</mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'whatsapp.displayPhone' | transloco }} ({{ 'common.optional' | transloco }})</mat-label>
+        <input matInput formControlName="displayPhoneNumber" autocomplete="off" placeholder="+55 11 4000-0000" />
+      </mat-form-field>
+    </div>
+
+    <h3>{{ 'whatsapp.sectionCredentials' | transloco }}</h3>
+    <p class="hint"><mat-icon>lock</mat-icon>{{ 'whatsapp.credentialsHint' | transloco }}</p>
+    <div class="grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Access token</mat-label>
+        <input matInput [type]="showToken() ? 'text' : 'password'" formControlName="accessToken" autocomplete="new-password"
+          [placeholder]="(info?.hasAccessToken ? 'whatsapp.keepSaved' : 'whatsapp.pasteToken') | transloco" />
+        <button mat-icon-button matSuffix type="button" (click)="showToken.set(!showToken())" [attr.aria-label]="'whatsapp.toggleVisibility' | transloco">
+          <mat-icon>{{ showToken() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (info?.hasAccessToken) {
+          <mat-hint><mat-icon class="ok">check_circle</mat-icon>{{ 'whatsapp.saved' | transloco }}</mat-hint>
+        }
+        <mat-error>{{ 'whatsapp.noSpaces' | transloco }}</mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>App Secret</mat-label>
+        <input matInput type="password" formControlName="appSecret" autocomplete="new-password"
+          [placeholder]="(info?.hasAppSecret ? 'whatsapp.keepSaved' : 'whatsapp.pasteSecret') | transloco" />
+        @if (info?.hasAppSecret) {
+          <mat-hint><mat-icon class="ok">check_circle</mat-icon>{{ 'whatsapp.saved' | transloco }}</mat-hint>
+        } @else {
+          <mat-hint>{{ 'whatsapp.appSecretHint' | transloco }}</mat-hint>
+        }
+        <mat-error>{{ 'whatsapp.appSecretFormat' | transloco }}</mat-error>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>{{ 'common.cancel' | transloco }}</button>
+  <button mat-flat-button type="button" (click)="save()" [disabled]="saving()">{{ (saving() ? 'common.saving' : 'common.save') | transloco }}</button>
+</mat-dialog-actions>

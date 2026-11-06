@@ -1,0 +1,56 @@
+:host {
+  display: block;
+}
+
+.guide {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--primary);
+  border-left-width: 4px;
+  border-radius: var(--radius);
+  background: var(--primary-soft);
+  color: var(--text);
+
+  &--min {
+    padding-bottom: 6px;
+    padding-top: 6px;
+  }
+}
+
+.guide__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  mat-icon {
+    color: var(--primary);
+  }
+
+  strong {
+    flex: 1;
+    font-size: 14px;
+  }
+}
+
+.guide__toggle {
+  margin: -6px -8px -6px 0;
+}
+
+.guide__body {
+  margin: 6px 0 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.guide__steps {
+  margin: 0 0 8px;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.guide__more {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+}

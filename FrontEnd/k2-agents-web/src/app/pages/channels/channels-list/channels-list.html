@@ -1,0 +1,191 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'channels.title' | transloco }}</h1>
+      <p>{{ 'channels.pageSubtitle' | transloco }}</p>
+    </div>
+    <div class="header-actions">
+      @if (canManageWhatsApp()) {
+        <button mat-stroked-button type="button" (click)="editWhatsApp()" [disabled]="agents().length === 0">
+          <mat-icon>phone_iphone</mat-icon>{{ 'whatsapp.connect' | transloco }}
+        </button>
+      }
+      @if (canManage()) {
+        <button mat-flat-button type="button" (click)="edit()" [disabled]="agents().length === 0">
+          <mat-icon>add</mat-icon>{{ 'channels.newWebChat' | transloco }}
+        </button>
+      }
+    </div>
+  </header>
+
+  <app-module-guide module="channels" />
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <div class="grid">
+    @for (ch of channels(); track ch.id) {
+      @if (ch.whatsApp; as wa) {
+      <article class="card channel" [class.channel--inactive]="ch.status !== 'Active'">
+        <header class="channel__header">
+          <span class="icon icon--wa"><mat-icon>phone_iphone</mat-icon></span>
+          <div class="channel__title">
+            <strong>{{ ch.name }}</strong>
+            <small>
+              WhatsApp · {{ ch.agentName }}
+              @if (auth.isSuperAdmin()) {
+                · {{ ch.companyName }}
+              }
+            </small>
+          </div>
+          <span class="badge" [class.badge--success]="ch.status === 'Active'" [class.badge--warning]="ch.status === 'PendingCredentials'"
+            [class.badge--danger]="ch.status === 'Inactive'">
+            {{ 'channelStatus.' + ch.status | transloco }}
+          </span>
+          @if (canManageWhatsApp()) {
+            <button mat-icon-button type="button" [matMenuTriggerFor]="waMenu" [attr.aria-label]="'common.actions' | transloco">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #waMenu="matMenu" xPosition="before">
+              <button mat-menu-item type="button" (click)="editWhatsApp(ch)"><mat-icon>edit</mat-icon>{{ 'common.edit' | transloco }}</button>
+              @if (ch.status !== 'PendingCredentials') {
+                <button mat-menu-item type="button" (click)="toggle(ch)">
+                  <mat-icon>{{ ch.status === 'Active' ? 'pause_circle' : 'play_circle' }}</mat-icon>
+                  {{ (ch.status === 'Active' ? 'common.deactivate' : 'common.activate') | transloco }}
+                </button>
+              }
+              <button mat-menu-item type="button" class="danger-item" (click)="remove(ch)"><mat-icon>delete</mat-icon>{{ 'knowledge.delete' | transloco }}</button>
+            </mat-menu>
+          }
+        </header>
+
+        <dl class="facts">
+          <div><dt>{{ 'whatsapp.number' | transloco }}</dt><dd>{{ wa.displayPhoneNumber ?? '—' }}</dd></div>
+          <div><dt>Phone Number ID</dt><dd>{{ wa.phoneNumberId }}</dd></div>
+          <div>
+            <dt>{{ 'whatsapp.credentials' | transloco }}</dt>
+            <dd>
+              {{ (wa.hasAccessToken ? 'whatsapp.tokenOk' : 'whatsapp.tokenMissing') | transloco }} ·
+              {{ (wa.hasAppSecret ? 'whatsapp.secretOk' : 'whatsapp.secretMissing') | transloco }}
+            </dd>
+          </div>
+          <div><dt>{{ 'channels.conversations' | transloco }}</dt><dd>{{ ch.conversationCount }}</dd></div>
+        </dl>
+
+        @if (canManageWhatsApp()) {
+          <div class="install">
+            <span class="install__label">{{ 'whatsapp.webhookSetup' | transloco }}</span>
+            <div class="kv">
+              <span>{{ 'whatsapp.callbackUrl' | transloco }}</span>
+              <code class="snippet">{{ webhookUrl }}</code>
+              <button mat-icon-button type="button" (click)="copyText(webhookUrl)" [attr.aria-label]="'channels.copy' | transloco"><mat-icon>content_copy</mat-icon></button>
+            </div>
+            <div class="kv">
+              <span>{{ 'whatsapp.verifyToken' | transloco }}</span>
+              <code class="snippet">{{ wa.verifyToken }}</code>
+              <button mat-icon-button type="button" (click)="copyText(wa.verifyToken)" [attr.aria-label]="'channels.copy' | transloco"><mat-icon>content_copy</mat-icon></button>
+            </div>
+            <small class="muted">{{ 'whatsapp.webhookHint' | transloco }}</small>
+            <div class="install__actions">
+              <button mat-stroked-button type="button" (click)="testWhatsApp(ch)" [disabled]="testing() === ch.id || !wa.hasAccessToken">
+                <mat-icon>wifi_tethering</mat-icon>{{ (testing() === ch.id ? 'whatsapp.testing' : 'whatsapp.test') | transloco }}
+              </button>
+              <a mat-button routerLink="/conversations"><mat-icon>forum</mat-icon>{{ 'channels.viewConversations' | transloco }}</a>
+            </div>
+            @if (testResults()[ch.id]; as r) {
+              <p class="test-result" [class.test-result--ok]="r.ok" role="status">
+                <mat-icon>{{ r.ok ? 'check_circle' : 'error' }}</mat-icon>
+                @if (r.ok) {
+                  {{ 'whatsapp.testOk' | transloco: { name: r.verifiedName ?? '—', phone: r.displayPhoneNumber ?? '—' } }}
+                } @else {
+                  {{ 'whatsapp.testFailed' | transloco: { code: r.errorCode } }}
+                }
+              </p>
+            }
+          </div>
+        }
+      </article>
+      } @else {
+      <article class="card channel" [class.channel--inactive]="ch.status !== 'Active'">
+        <header class="channel__header">
+          <span class="icon" [style.background]="ch.settings.primaryColor"><mat-icon>chat</mat-icon></span>
+          <div class="channel__title">
+            <strong>{{ ch.name }}</strong>
+            <small>
+              {{ 'channelTypes.' + ch.channelType | transloco }} · {{ ch.agentName }}
+              @if (auth.isSuperAdmin()) {
+                · {{ ch.companyName }}
+              }
+            </small>
+          </div>
+          <span class="badge" [class.badge--success]="ch.status === 'Active'" [class.badge--danger]="ch.status !== 'Active'">
+            {{ 'channelStatus.' + ch.status | transloco }}
+          </span>
+          @if (canManage()) {
+            <button mat-icon-button type="button" [matMenuTriggerFor]="menu" [attr.aria-label]="'common.actions' | transloco">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu" xPosition="before">
+              <button mat-menu-item type="button" (click)="edit(ch)"><mat-icon>edit</mat-icon>{{ 'common.edit' | transloco }}</button>
+              <button mat-menu-item type="button" (click)="toggle(ch)">
+                <mat-icon>{{ ch.status === 'Active' ? 'pause_circle' : 'play_circle' }}</mat-icon>
+                {{ (ch.status === 'Active' ? 'common.deactivate' : 'common.activate') | transloco }}
+              </button>
+              <button mat-menu-item type="button" (click)="regenerate(ch)"><mat-icon>key</mat-icon>{{ 'channels.regenerate' | transloco }}</button>
+              <button mat-menu-item type="button" class="danger-item" (click)="remove(ch)"><mat-icon>delete</mat-icon>{{ 'knowledge.delete' | transloco }}</button>
+            </mat-menu>
+          }
+        </header>
+
+        <dl class="facts">
+          <div><dt>{{ 'channels.conversations' | transloco }}</dt><dd>{{ ch.conversationCount }}</dd></div>
+          <div>
+            <dt>{{ 'channels.allowedOrigins' | transloco }}</dt>
+            <dd>{{ ch.allowedOrigins.length ? ch.allowedOrigins.join(', ') : ('channels.anySite' | transloco) }}</dd>
+          </div>
+          <div><dt>{{ 'channels.replies' | transloco }}</dt><dd>{{ (ch.settings.allowSimulatedReplies ? 'channels.repliesWithDemo' : 'channels.repliesAiOnly') | transloco }}</dd></div>
+          <div><dt>{{ 'knowledge.updatedAt' | transloco }}</dt><dd>{{ ch.updatedAt | date: 'dd/MM/yyyy' }}</dd></div>
+        </dl>
+
+        @if (ch.publicToken) {
+          <div class="install">
+            <span class="install__label">{{ 'channels.install' | transloco }}</span>
+            <code class="snippet">{{ snippet(ch) }}</code>
+            <div class="install__actions">
+              <button mat-stroked-button type="button" (click)="copy(ch)"><mat-icon>content_copy</mat-icon>{{ 'channels.copy' | transloco }}</button>
+              <a mat-stroked-button [href]="demoUrl(ch)" target="_blank" rel="noopener" [class.disabled]="ch.status !== 'Active'">
+                <mat-icon>open_in_new</mat-icon>{{ 'channels.openDemo' | transloco }}
+              </a>
+              <a mat-button routerLink="/conversations"><mat-icon>forum</mat-icon>{{ 'channels.viewConversations' | transloco }}</a>
+            </div>
+          </div>
+        }
+      </article>
+      }
+    } @empty {
+      @if (!loading()) {
+        <div class="card empty-state">
+          <mat-icon class="empty-icon">hub</mat-icon>
+          <p>{{ 'channels.empty' | transloco }}</p>
+        </div>
+      }
+    }
+
+    @if (!loading() && !hasWhatsApp()) {
+      <article class="card channel channel--soon">
+        <header class="channel__header">
+          <span class="icon icon--wa"><mat-icon>phone_iphone</mat-icon></span>
+          <div class="channel__title">
+            <strong>WhatsApp Business Platform</strong>
+            <small>{{ 'whatsapp.officialApi' | transloco }}</small>
+          </div>
+        </header>
+        <p class="muted">{{ 'whatsapp.promo' | transloco }}</p>
+        @if (canManageWhatsApp()) {
+          <button mat-stroked-button type="button" (click)="editWhatsApp()" [disabled]="agents().length === 0"><mat-icon>add</mat-icon>{{ 'whatsapp.connect' | transloco }}</button>
+        }
+      </article>
+    }
+  </div>
+</div>

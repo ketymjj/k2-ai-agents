@@ -1,0 +1,17 @@
+.progress {
+  height: 4px;
+  margin-top: 12px;
+}
+
+.link {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover strong {
+    color: var(--primary);
+  }
+}
+
+.empty-state button {
+  margin-top: 8px;
+}

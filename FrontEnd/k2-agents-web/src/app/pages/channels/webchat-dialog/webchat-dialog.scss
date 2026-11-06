@@ -1,0 +1,151 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 24px;
+
+  @media (max-width: 760px) {
+    grid-template-columns: 1fr;
+
+    .preview {
+      display: none;
+    }
+  }
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  h3 {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+
+  .color-field {
+    flex: 1 1 180px;
+  }
+}
+
+.swatch {
+  width: 32px;
+  height: 32px;
+  margin-right: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.hint {
+  margin: -4px 0 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.alert {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--k2-red);
+}
+
+/* ---------- Pré-visualização ---------- */
+
+.preview {
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+
+.preview__label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.mock-site {
+  position: relative;
+  height: 400px;
+  border-radius: var(--radius);
+  background: repeating-linear-gradient(0deg, var(--surface-2), var(--surface-2) 18px, var(--surface) 18px, var(--surface) 36px);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.mock-panel {
+  position: absolute;
+  right: 12px;
+  bottom: 64px;
+  width: 210px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.2);
+}
+
+.mock-header {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  color: #fff;
+
+  small {
+    opacity: 0.85;
+    font-size: 11px;
+  }
+}
+
+.mock-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #f9fafb;
+}
+
+.mock-bubble {
+  align-self: flex-start;
+  max-width: 85%;
+  padding: 6px 10px;
+  border: 1px solid #eaecf0;
+  border-radius: 10px;
+  background: #fff;
+  color: #101828;
+  font-size: 11px;
+
+  &--me {
+    align-self: flex-end;
+    border: 0;
+    color: #fff;
+  }
+}
+
+.mock-launcher {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.mock-site--left {
+  .mock-panel,
+  .mock-launcher {
+    right: auto;
+    left: 12px;
+  }
+}

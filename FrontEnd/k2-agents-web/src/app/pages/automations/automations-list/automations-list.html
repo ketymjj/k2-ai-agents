@@ -1,0 +1,74 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>{{ 'automations.title' | transloco }}</h1>
+      <p>{{ 'automations.subtitle' | transloco }}</p>
+    </div>
+    @if (canManage() && catalog()) {
+      <button mat-flat-button type="button" (click)="open(null)"><mat-icon>add</mat-icon>{{ 'automations.new' | transloco }}</button>
+    }
+  </header>
+
+  <app-module-guide module="automations" />
+
+  <div class="card notice">
+    <mat-icon>verified_user</mat-icon>
+    <span>{{ 'automations.safetyNote' | transloco }}</span>
+  </div>
+
+  <div class="progress">
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+  </div>
+
+  @if (!loading() && rules().length === 0) {
+    <div class="card empty-state">{{ 'automations.empty' | transloco }}</div>
+  }
+
+  <div class="rules">
+    @for (r of rules(); track r.id) {
+      <article class="card rule" [class.rule--off]="!r.enabled">
+        <header class="rule__head">
+          <div>
+            <h2>{{ r.name }}</h2>
+            @if (auth.isSuperAdmin()) {
+              <small class="muted">{{ r.companyName }}</small>
+            }
+          </div>
+          <mat-slide-toggle [checked]="r.enabled" [disabled]="!canManage() || busy() === r.id" (change)="toggle(r, $event)"
+            [attr.aria-label]="'automations.enabled' | transloco" />
+        </header>
+        <p class="flow">
+          <span class="pill pill--when"><mat-icon>bolt</mat-icon>{{ 'automations.triggers.' + r.triggerType | transloco }}</span>
+          <mat-icon class="arrow" aria-hidden="true">arrow_forward</mat-icon>
+          <span class="pill"><mat-icon>task_alt</mat-icon>{{ 'automations.actions.' + r.actionType | transloco }}</span>
+        </p>
+        @if (r.configuration.title || r.configuration.message) {
+          <p class="config">
+            @if (r.configuration.title) {
+              <strong>{{ r.configuration.title }}</strong>
+            }
+            @if (r.configuration.message) {
+              <span>{{ r.configuration.message }}</span>
+            }
+          </p>
+        }
+        <footer class="rule__foot">
+          <span class="muted">
+            {{ 'automations.executions' | transloco: { count: r.executionCount } }}
+            @if (r.lastExecutedAt) {
+              · {{ 'automations.lastRun' | transloco }} {{ r.lastExecutedAt | date: 'dd/MM HH:mm' }}
+            }
+          </span>
+          @if (canManage()) {
+            <span class="rule__actions">
+              <button mat-icon-button type="button" (click)="open(r)" [attr.aria-label]="'common.edit' | transloco" [matTooltip]="'common.edit' | transloco"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button type="button" (click)="remove(r)" [attr.aria-label]="'common.delete' | transloco" [matTooltip]="'common.delete' | transloco"><mat-icon>delete</mat-icon></button>
+            </span>
+          }
+        </footer>
+      </article>
+    }
+  </div>
+</div>

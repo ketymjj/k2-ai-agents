@@ -1,0 +1,77 @@
+<h2 mat-dialog-title>{{ (isEdit ? 'users.editTitle' : 'users.newTitle') | transloco }}</h2>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    @if (serverError(); as message) {
+      <div class="alert" role="alert">{{ message }}</div>
+    }
+    <div class="form-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'users.name' | transloco }}</mat-label>
+        <input matInput formControlName="name" maxlength="120" />
+        @if (form.controls.name.hasError('required')) {
+          <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'users.email' | transloco }}</mat-label>
+        <input matInput type="email" formControlName="email" autocomplete="off" />
+        @if (form.controls.email.hasError('required')) {
+          <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+        } @else if (form.controls.email.hasError('email')) {
+          <mat-error>{{ 'errors.email' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" [class.full]="!showCompany()">
+        <mat-label>{{ 'users.role' | transloco }}</mat-label>
+        <mat-select formControlName="role">
+          @for (role of availableRoles; track role.id) {
+            <mat-option [value]="role.id">{{ 'roles.' + role.id | transloco }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>{{ 'roleDescriptions.' + form.controls.role.value | transloco }}</mat-hint>
+      </mat-form-field>
+
+      @if (showCompany()) {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'users.company' | transloco }}</mat-label>
+          <mat-select formControlName="companyId">
+            @for (company of data.companies; track company.id) {
+              <mat-option [value]="company.id">{{ company.name }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.companyId.hasError('required')) {
+            <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+          }
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ (isEdit ? 'users.newPassword' : 'users.password') | transloco }}</mat-label>
+        <input matInput type="password" formControlName="password" autocomplete="new-password" />
+        <mat-hint>{{ (isEdit ? 'users.newPasswordHint' : 'users.passwordHint') | transloco }}</mat-hint>
+        @if (form.controls.password.hasError('required')) {
+          <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+        } @else if (form.controls.password.hasError('pattern')) {
+          <mat-error>{{ 'errors.password' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'users.language' | transloco }}</mat-label>
+        <mat-select formControlName="preferredLanguage">
+          @for (lang of languages; track lang) {
+            <mat-option [value]="lang">{{ 'languages.' + lang | transloco }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>{{ 'common.cancel' | transloco }}</button>
+    <button mat-flat-button type="submit" [disabled]="saving()">
+      {{ (saving() ? 'common.saving' : 'common.save') | transloco }}
+    </button>
+  </mat-dialog-actions>
+</form>

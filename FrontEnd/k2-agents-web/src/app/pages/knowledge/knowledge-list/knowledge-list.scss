@@ -1,0 +1,152 @@
+.header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.progress {
+  height: 4px;
+  margin-top: 12px;
+}
+
+.doc-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover strong {
+    color: var(--primary);
+  }
+}
+
+.type-icon {
+  color: var(--primary);
+}
+
+tr.archived td {
+  opacity: 0.6;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.danger-item {
+  color: var(--k2-red);
+}
+
+.empty-state .empty-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: var(--primary);
+}
+
+/* ---------- Testar busca ---------- */
+
+.search-test {
+  margin-top: 20px;
+  padding: 20px;
+
+  header {
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 16px;
+
+    mat-icon {
+      color: var(--primary);
+    }
+  }
+
+  header p {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+  }
+}
+
+.search-form {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 12px;
+
+  .mat-mdc-form-field {
+    width: auto;
+    flex: 0 1 220px;
+  }
+
+  .grow {
+    flex: 1 1 320px;
+  }
+}
+
+.no-hits {
+  margin: 8px 0 0;
+}
+
+.hits {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  li {
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+
+  p {
+    margin: 6px 0 0;
+    white-space: pre-wrap;
+    color: var(--text-muted);
+    font-size: 13px;
+    max-height: 7.5em;
+    overflow: hidden;
+  }
+}
+
+.hit-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.score {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.score-bar {
+  width: 80px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    background: var(--k2-green);
+  }
+}

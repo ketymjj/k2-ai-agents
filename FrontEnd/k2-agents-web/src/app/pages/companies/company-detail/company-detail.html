@@ -1,0 +1,84 @@
+<div class="page">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  } @else if (notFound()) {
+    <div class="card empty-state">
+      <p>{{ 'companies.empty' | transloco }}</p>
+      @if (auth.isSuperAdmin()) {
+        <a mat-stroked-button routerLink="/companies">{{ 'common.back' | transloco }}</a>
+      }
+    </div>
+  } @else if (company(); as c) {
+    <header class="page-header">
+      <div class="title">
+        @if (auth.isSuperAdmin()) {
+          <a mat-icon-button routerLink="/companies" [attr.aria-label]="'common.back' | transloco">
+            <mat-icon>arrow_back</mat-icon>
+          </a>
+        }
+        <div>
+          <h1>
+            {{ c.name }}
+            <span class="badge" [class.badge--success]="c.status === 'Active'" [class.badge--danger]="c.status !== 'Active'">
+              {{ 'companyStatus.' + c.status | transloco }}
+            </span>
+          </h1>
+          <p>{{ c.industry ?? '—' }} · {{ 'companies.createdAt' | transloco }} {{ c.createdAt | date: 'dd/MM/yyyy' }}</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        @if (canManageUsers()) {
+          <a mat-stroked-button [routerLink]="['/users']" [queryParams]="auth.isSuperAdmin() ? { companyId: c.id } : {}">
+            <mat-icon>group</mat-icon>
+            {{ 'companies.manageUsers' | transloco }}
+          </a>
+        }
+        @if (canEdit()) {
+          <button mat-flat-button type="button" (click)="edit()">
+            <mat-icon>edit</mat-icon>
+            {{ 'common.edit' | transloco }}
+          </button>
+        }
+      </div>
+    </header>
+
+  <app-module-guide module="company" />
+
+    <h2 class="section-title">{{ 'companies.indicators' | transloco }}</h2>
+    <div class="indicators">
+      @for (item of indicators(); track item.labelKey) {
+        <div class="card indicator" [class.indicator--warning]="item.tone === 'warning'">
+          <span class="indicator__icon"><mat-icon>{{ item.icon }}</mat-icon></span>
+          <div>
+            <span class="indicator__label">{{ item.labelKey | transloco }}</span>
+            <strong class="indicator__value">{{ item.value }}</strong>
+            @if (item.detailKey) {
+              <small>{{ item.detailKey | transloco: { count: item.detailCount } }}</small>
+            }
+            @if (item.link) {
+              <a class="indicator__link" [routerLink]="item.link" [queryParams]="item.queryParams">{{ 'common.viewAll' | transloco }}</a>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <h2 class="section-title">{{ 'companies.contact' | transloco }}</h2>
+    <dl class="card info">
+      <div><dt>{{ 'companies.document' | transloco }}</dt><dd>{{ c.document | document }}</dd></div>
+      <div><dt>{{ 'companies.email' | transloco }}</dt><dd>{{ c.email ?? '—' }}</dd></div>
+      <div><dt>{{ 'companies.phone' | transloco }}</dt><dd>{{ c.phone ?? '—' }}</dd></div>
+      <div>
+        <dt>{{ 'companies.website' | transloco }}</dt>
+        <dd>
+          @if (c.website) {
+            <a [href]="c.website" target="_blank" rel="noopener noreferrer">{{ c.website }}</a>
+          } @else {
+            —
+          }
+        </dd>
+      </div>
+      <div><dt>{{ 'companies.retention' | transloco }}</dt><dd>{{ c.conversationRetentionDays ?? '—' }}</dd></div>
+    </dl>
+  }
+</div>

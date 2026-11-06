@@ -1,0 +1,80 @@
+<h2 mat-dialog-title>
+  @if (doc) {
+    {{ (data.readOnly ? 'knowledge.viewTitle' : 'knowledge.editTitle') | transloco }}
+  } @else {
+    {{ (isFaq ? 'knowledge.newFaq' : 'knowledge.newText') | transloco }}
+  }
+</h2>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    @if (serverError(); as message) {
+      <div class="alert alert--error" role="alert">{{ message }}</div>
+    }
+    @if (isFile && doc) {
+      <div class="file-info">
+        <mat-icon>description</mat-icon>
+        <div>
+          <strong>{{ doc.originalFileName }}</strong>
+          <small>{{ formatBytes(doc.fileSizeBytes) }} · {{ 'knowledge.chunks' | transloco: { count: doc.chunkCount } }}</small>
+        </div>
+      </div>
+      @if (doc.errorMessage) {
+        <div class="alert alert--warning">{{ doc.errorMessage }}</div>
+      }
+    }
+
+    <div class="fields">
+      @if (showCompany) {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'users.company' | transloco }}</mat-label>
+          <mat-select formControlName="companyId">
+            @for (c of data.companies; track c.id) {
+              <mat-option [value]="c.id">{{ c.name }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.companyId.hasError('required')) {
+            <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+          }
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ (isFaq ? 'agents.question' : 'knowledge.title') | transloco }}</mat-label>
+        <input matInput formControlName="title" [maxlength]="isFaq ? 300 : 200" />
+        @if (form.controls.title.hasError('required')) {
+          <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'knowledge.scope' | transloco }}</mat-label>
+        <mat-select formControlName="agentId">
+          <mat-option value="">{{ 'knowledge.allAgents' | transloco }}</mat-option>
+          @for (a of agents(); track a.id) {
+            <mat-option [value]="a.id">{{ a.name }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>{{ 'knowledge.scopeHint' | transloco }}</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="content-field">
+        <mat-label>{{ (isFaq ? 'agents.answer' : isFile ? 'knowledge.extractedText' : 'knowledge.content') | transloco }}</mat-label>
+        <textarea matInput formControlName="content" [rows]="isFaq ? 5 : 14"></textarea>
+        <mat-hint>{{ (isFile ? 'knowledge.extractedHint' : isFaq ? 'knowledge.faqHint' : 'knowledge.contentHint') | transloco }}</mat-hint>
+        <mat-hint align="end">{{ form.controls.content.value.length | number }}</mat-hint>
+        @if (form.controls.content.hasError('required')) {
+          <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+    <p class="security-note"><mat-icon>shield</mat-icon>{{ 'knowledge.securityNote' | transloco }}</p>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>{{ (data.readOnly ? 'common.close' : 'common.cancel') | transloco }}</button>
+    @if (!data.readOnly) {
+      <button mat-flat-button type="submit" [disabled]="saving()">
+        {{ (saving() ? 'common.saving' : 'common.save') | transloco }}
+      </button>
+    }
+  </mat-dialog-actions>
+</form>

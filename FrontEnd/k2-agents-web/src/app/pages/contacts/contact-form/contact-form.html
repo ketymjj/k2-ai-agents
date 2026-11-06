@@ -1,0 +1,69 @@
+<h2 mat-dialog-title>{{ (data.contact ? 'contacts.editTitle' : 'contacts.newTitle') | transloco }}</h2>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    @if (serverError(); as message) {
+      <div class="alert" role="alert">{{ message }}</div>
+    }
+    <div class="form-grid">
+      @if (showCompany) {
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ 'users.company' | transloco }}</mat-label>
+          <mat-select formControlName="companyId">
+            @for (co of data.companies; track co.id) {
+              <mat-option [value]="co.id">{{ co.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'contacts.name' | transloco }}</mat-label>
+        <input matInput formControlName="name" maxlength="120" />
+        @if (form.controls.name.hasError('required')) {
+          <mat-error>{{ 'errors.required' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'contacts.email' | transloco }}</mat-label>
+        <input matInput type="email" formControlName="email" />
+        @if (form.controls.email.hasError('email')) {
+          <mat-error>{{ 'errors.email' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'contacts.phone' | transloco }}</mat-label>
+        <input matInput type="tel" formControlName="phone" placeholder="(11) 98888-1234" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'contacts.stage' | transloco }}</mat-label>
+        <mat-select formControlName="status">
+          @for (s of statuses; track s) {
+            <mat-option [value]="s">{{ 'contactStatus.' + s | transloco }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'contacts.interest' | transloco }}</mat-label>
+        <mat-select formControlName="interest">
+          @for (i of interests; track i) {
+            <mat-option [value]="i">{{ 'interest.' + i | transloco }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'contacts.source' | transloco }}</mat-label>
+        <input matInput formControlName="source" maxlength="40" />
+      </mat-form-field>
+      <div class="lead-box">
+        <mat-checkbox formControlName="isLead">{{ 'contacts.isLead' | transloco }}</mat-checkbox>
+      </div>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'contacts.notes' | transloco }} ({{ 'common.optional' | transloco }})</mat-label>
+        <textarea matInput formControlName="notes" rows="3" maxlength="2000"></textarea>
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>{{ 'common.cancel' | transloco }}</button>
+    <button mat-flat-button type="submit" [disabled]="saving()">{{ (saving() ? 'common.saving' : 'common.save') | transloco }}</button>
+  </mat-dialog-actions>
+</form>

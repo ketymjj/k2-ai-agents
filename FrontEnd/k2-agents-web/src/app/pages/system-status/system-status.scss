@@ -1,0 +1,49 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.status-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+
+  small {
+    color: var(--text-muted);
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.status-card--error {
+  border-color: var(--k2-red);
+  margin-bottom: 16px;
+}
+
+.label {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.value {
+  font-size: 20px;
+  font-weight: 700;
+
+  &.ok {
+    color: var(--k2-green);
+  }
+
+  &.warn {
+    color: var(--k2-amber);
+  }
+
+  &.fail {
+    color: var(--k2-red);
+  }
+}

@@ -1,0 +1,127 @@
+<h2 mat-dialog-title>{{ (isNew ? 'appointments.newTitle' : 'appointments.detailTitle') | transloco }}</h2>
+<mat-dialog-content>
+  @if (error(); as e) {
+    <div class="alert" role="alert">{{ e }}</div>
+  }
+
+  @if (appointment(); as a) {
+    <section class="summary">
+      <div class="summary__head">
+        <strong>{{ a.serviceName }}</strong>
+        <span class="status status--{{ a.status }}">{{ 'appointmentStatus.' + a.status | transloco }}</span>
+      </div>
+      <dl>
+        <div><dt>{{ 'appointments.when' | transloco }}</dt><dd>{{ a.startDateTime | date: 'EEEE, dd/MM/yyyy' : undefined : locale() }} · {{ a.startDateTime | date: 'HH:mm' }}–{{ a.endDateTime | date: 'HH:mm' }}</dd></div>
+        <div>
+          <dt>{{ 'appointments.customer' | transloco }}</dt>
+          <dd>
+            @if (a.contactId) {
+              <a [routerLink]="['/contacts', a.contactId]" mat-dialog-close>{{ a.contactName }}</a> · {{ formatPhone(a.contactPhone) }}
+            } @else {
+              {{ 'appointments.noCustomer' | transloco }}
+            }
+          </dd>
+        </div>
+        <div><dt>{{ 'appointments.source' | transloco }}</dt><dd>{{ 'appointments.sources.' + a.source | transloco }}{{ a.agentName ? ' · ' + a.agentName : '' }}</dd></div>
+        @if (a.notes) {
+          <div><dt>{{ 'contacts.notes' | transloco }}</dt><dd>{{ a.notes }}</dd></div>
+        }
+        @if (a.conversationId) {
+          <div><dt>{{ 'appointments.conversation' | transloco }}</dt><dd><a [routerLink]="['/conversations']" [queryParams]="{ id: a.conversationId }" mat-dialog-close>{{ 'appointments.openConversation' | transloco }}</a></dd></div>
+        }
+      </dl>
+    </section>
+  }
+
+  @if (showPicker()) {
+    <section class="picker">
+      @if (rescheduling()) {
+        <h3>{{ 'appointments.newTime' | transloco }}</h3>
+      }
+      <div class="row">
+        @if (isNew) {
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'appointments.service' | transloco }}</mat-label>
+            <mat-select [ngModel]="service()" (ngModelChange)="service.set($event); loadSlots()">
+              @for (s of data.settings.services; track s.name) {
+                <mat-option [value]="s.name">{{ s.name }} · {{ s.durationMinutes }} min</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'appointments.date' | transloco }}</mat-label>
+          <input matInput type="date" [ngModel]="date()" (ngModelChange)="date.set($event); loadSlots()" />
+        </mat-form-field>
+      </div>
+
+      <h4>{{ 'appointments.freeTimes' | transloco }}</h4>
+      @if (loadingSlots()) {
+        <mat-progress-bar mode="indeterminate" />
+      } @else if (slots().length === 0) {
+        <p class="muted">{{ 'appointments.noSlots' | transloco }}</p>
+      } @else {
+        <div class="slots" role="listbox">
+          @for (s of slots(); track s.start) {
+            <button type="button" role="option" class="slot" [class.slot--selected]="selectedSlot() === s.start"
+              [attr.aria-selected]="selectedSlot() === s.start" (click)="selectedSlot.set(s.start); manualTime.set('')">
+              {{ s.start | date: 'HH:mm' }}
+            </button>
+          }
+        </div>
+      }
+      <details class="manual">
+        <summary>{{ 'appointments.manualTime' | transloco }}</summary>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'appointments.time' | transloco }}</mat-label>
+          <input matInput type="time" [ngModel]="manualTime()" (ngModelChange)="manualTime.set($event); selectedSlot.set(null)" />
+        </mat-form-field>
+        <small class="muted">{{ 'appointments.manualHint' | transloco }}</small>
+      </details>
+
+      @if (isNew) {
+        <h4>{{ 'appointments.customer' | transloco }} ({{ 'common.optional' | transloco }})</h4>
+        @if (contact(); as c) {
+          <div class="chosen-contact">
+            <mat-icon>person</mat-icon>
+            <span>{{ c.name }} · {{ formatPhone(c.phone) }}</span>
+            <button mat-icon-button type="button" (click)="clearContact()" [attr.aria-label]="'agents.remove' | transloco"><mat-icon>close</mat-icon></button>
+          </div>
+        } @else {
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="full">
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput [formControl]="contactSearch" [matAutocomplete]="auto" [placeholder]="'appointments.searchContact' | transloco" />
+            <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayContact" (optionSelected)="pickContact($event.option.value)">
+              @for (c of contactOptions(); track c.id) {
+                <mat-option [value]="c">{{ c.name }} · {{ formatPhone(c.phone) }}</mat-option>
+              }
+            </mat-autocomplete>
+          </mat-form-field>
+        }
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="full notes">
+          <mat-label>{{ 'contacts.notes' | transloco }}</mat-label>
+          <textarea matInput rows="2" maxlength="1000" [ngModel]="notes()" (ngModelChange)="notes.set($event)"></textarea>
+        </mat-form-field>
+      }
+    </section>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  @if (!isNew && data.canEdit && isActive() && !rescheduling()) {
+    <div class="status-actions">
+      @if (appointment()!.status === 'Scheduled') {
+        <button mat-stroked-button type="button" (click)="setStatus('Confirmed')" [disabled]="saving()"><mat-icon>check</mat-icon>{{ 'appointments.confirm' | transloco }}</button>
+      }
+      <button mat-stroked-button type="button" (click)="startReschedule()"><mat-icon>event_repeat</mat-icon>{{ 'appointments.reschedule' | transloco }}</button>
+      <button mat-stroked-button type="button" (click)="setStatus('Completed')" [disabled]="saving()"><mat-icon>task_alt</mat-icon>{{ 'appointments.complete' | transloco }}</button>
+      <button mat-stroked-button type="button" (click)="setStatus('NoShow')" [disabled]="saving()">{{ 'appointments.noShow' | transloco }}</button>
+      <button mat-stroked-button type="button" class="danger" (click)="setStatus('Cancelled')" [disabled]="saving()"><mat-icon>event_busy</mat-icon>{{ 'appointments.cancel' | transloco }}</button>
+    </div>
+  }
+  <button mat-button type="button" mat-dialog-close>{{ 'common.close' | transloco }}</button>
+  @if (showPicker() && data.canEdit) {
+    <button mat-flat-button type="button" (click)="save()" [disabled]="saving()">
+      {{ (rescheduling() ? 'appointments.saveReschedule' : 'appointments.book') | transloco }}
+    </button>
+  }
+</mat-dialog-actions>
